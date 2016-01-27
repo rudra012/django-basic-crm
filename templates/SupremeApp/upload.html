@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Supreme Data</title>
+</head>
+<body>
+
+</body>
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+{% if form %}
+
+<form enctype="multipart/form-data" method="post" action="">
+
+    {% csrf_token %}
+
+    {{ form }}
+    <input type="submit" value="Submit" class="default" name="_save" />
+
+</form>
+{% endif %}
+{% endblock %}
+</html>

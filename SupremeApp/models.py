@@ -98,6 +98,7 @@ class SupremeModel(models.Model):
     barring_date = models.DateField(null=True)
     allocation_date = models.DateField(null=True)
     closing_date = models.DateField(null=True)
+    address = models.CharField(max_length=300, null=True)
 
     final_tc_name = models.CharField(max_length=50, null=True)
     final_calling_date = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name="Calling Date")
@@ -113,10 +114,12 @@ class SupremeModel(models.Model):
                                                                               ("BNR",) * 2,
                                                                               ("NR",) * 2,
                                                                               ("RTP",) * 2,
-                                                                              ("PTP",) * 2, ],
+
+                                                                              ("PTP",) * 2,
+                                                                              ("Others",) * 2,],
                                           verbose_name="Dispo Code")
     final_calling_remarks = models.CharField(max_length=250, null=True, verbose_name="Remarks")
-    final_followup_date = models.DateField(null=True, verbose_name="Date", blank=True)
+    final_followup_date = models.DateTimeField(null=True, verbose_name="CB/PTP Date", blank=True)
 
     # Export Data
     tc_1_name = models.CharField(max_length=50, null=True)
@@ -130,29 +133,28 @@ class SupremeModel(models.Model):
     tc_2_attempt_remarks = models.CharField(max_length=100, null=True)
 
     tc_3_name = models.CharField(max_length=50, null=True)
-    tc_3_attempt_date = models.CharField(max_length=100, null=True)
+    tc_3_attempt_date = models.DateTimeField(null=True)
     tc_3_attempt_code = models.CharField(max_length=100, null=True)
     tc_3_attempt_remarks = models.CharField(max_length=100, null=True)
 
     tc_4_name = models.CharField(max_length=50, null=True)
-    tc_4_attempt_date = models.CharField(max_length=100, null=True)
+    tc_4_attempt_date = models.DateTimeField(null=True)
     tc_4_attempt_code = models.CharField(max_length=100, null=True)
     tc_4_attempt_remarks = models.CharField(max_length=100, null=True)
 
     tc_5_name = models.CharField(max_length=50, null=True)
-    tc_5_attempt_date = models.CharField(max_length=100, null=True)
+    tc_5_attempt_date = models.DateTimeField(null=True)
     tc_5_attempt_code = models.CharField(max_length=100, null=True)
     tc_5_attempt_remarks = models.CharField(max_length=100, null=True)
 
     tc_6_name = models.CharField(max_length=50, null=True)
-    tc_6_attempt_date = models.CharField(max_length=100, null=True)
+    tc_6_attempt_date = models.DateTimeField(null=True)
     tc_6_attempt_code = models.CharField(max_length=100, null=True)
     tc_6_attempt_remarks = models.CharField(max_length=100, null=True)
 
-    status = models.CharField(max_length=100, null=True, default="UNPAID")
+    status = models.CharField(max_length=100, null=True, default="Unpaid")
 
-    date_created = models.DateTimeField(auto_now_add=True, auto_now=False)
-    date_modified = models.DateTimeField(auto_now_add=False, auto_now=True)
-    tc_name = models.CharField(max_length=50, null=True)
     processed = models.BooleanField(default=False)
     attempt = models.CharField(max_length=5, null=True, blank=True, default=0)
+    date_created = models.DateTimeField(auto_now_add=True, auto_now=False)
+    date_modified = models.DateTimeField(auto_now_add=False, auto_now=True)  #

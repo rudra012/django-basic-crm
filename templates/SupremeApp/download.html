@@ -7,4 +7,57 @@
 <body>
 
 </body>
+
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+    {% if form %}
+
+        <form action="/SupremeApp/download/" method="post" id="download_form">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Submit" class="default" name="_save" />
+        </form>
+    {% endif %}
+
+    <div>
+        <table>
+            {% if rec_page %}
+            <tr>
+            {% for h in heading %}
+                <td>
+                {{ h }}
+                </td>
+            {% endfor %}
+            </tr>
+
+            {% endif %}
+            {% for r in rec_page %}
+                <tr>
+                    <td >
+                    {{ r }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+        {% if rec_page.object_list %}
+            <div class="pagination">
+                <span class="step-links">
+                    {% if rec_page.has_previous %}
+                        <a href="/SupremeApp/download/?page={{ rec_page.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ rec_page.number }} of {{ rec_page.paginator.num_pages }}.
+                    </span>
+
+                    {% if rec_page.has_next %}
+                        <a href="/SupremeApp/download/?page={{ rec_page.next_page_number }}">next</a>
+                    {% endif %}
+                </span>
+            </div>
+        {% endif %}
+{% endblock %}
 </html>

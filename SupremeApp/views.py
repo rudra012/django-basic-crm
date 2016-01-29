@@ -12,6 +12,13 @@ from SupremeApp.form import UploadFileForm, DownloadFileForm
 from SupremeApp.models import SupremeModel
 
 
+def try_to_int(idata):
+    try:
+        return int(idata)
+    except:
+        return 0
+
+
 def xmldate_to_pdate(xdate):
     """
     Converts xml date type to python date
@@ -23,7 +30,7 @@ def xmldate_to_pdate(xdate):
         return None
 
 
-def handle_excel_file(ufile, sheet_no):
+def handle_data_excel_file(ufile, sheet_no):
     print('reading file', ufile)
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
@@ -37,8 +44,8 @@ def handle_excel_file(ufile, sheet_no):
         for i in range(1, sheet.nrows):
             print(i)
 
-            for col in range(sheet.ncols):
-                print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
+            # for col in range(sheet.ncols):
+            #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
 
             try:
                 SupremeModel(
@@ -163,7 +170,7 @@ def upload(request):
         if form.is_valid():
             ufile = request.FILES['file']
             if ufile.name.endswith('.xls') or ufile.name.endswith('.xlsx'):
-                msg = handle_excel_file(ufile, int(form.data['sheet_no']))
+                msg = handle_data_excel_file(ufile, int(form.data['sheet_no']))
             else:
                 msg = [" .xls, .xlsx and .csv file formats are only supported."]
             messages = msg
@@ -171,6 +178,77 @@ def upload(request):
             messages.append("Supply appropriate data.")
     form = UploadFileForm()
     return render(request, 'SupremeApp/upload.html', locals())
+
+
+def handle_paid_excel_file(ufile, sheet_no):
+    print('reading paid file', ufile)
+    wb = xlrd.open_workbook(file_contents=ufile.read())
+    print wb.nsheets
+    if sheet_no not in range(1, wb.nsheets + 1):
+        return ["Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)]
+
+    sheet = wb.sheet_by_index(sheet_no - 1)
+    msg = []
+    uploaded = []
+    try:
+        for i in range(1, sheet.nrows):
+            print(i)
+
+            # for col in range(sheet.ncols):
+            #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col).value), sheet.name)
+
+            try:
+                mobile_no = '%.0f' % sheet.cell(i, 1).value
+                payment_amt = '%.0f' % sheet.cell(i, 4).value
+                credit_limit = '%.0f' % sheet.cell(i, 9).value
+                print mobile_no, payment_amt, credit_limit
+                print type(mobile_no), type(payment_amt)
+                paid_user_obj_list = list(SupremeModel.objects.filter(mdn_no=mobile_no))
+                # Sort to get latest object first
+                paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
+                last_user_obj = paid_user_obj_list[0]
+                print last_user_obj.account_balance
+                print last_user_obj.pending_amount
+                remain_payment = try_to_int(last_user_obj.pending_amount) - try_to_int(last_user_obj.account_balance) \
+                                        - try_to_int(payment_amt)
+                print remain_payment
+                if remain_payment <= 100:
+                    last_user_obj.status = "Paid"
+                else:
+                    last_user_obj.status = "Partial Paid"
+                last_user_obj.save()
+            except Exception, e:
+                print traceback.format_exc()
+    except Exception, e:
+        print traceback.format_exc()
+        return ["System Error: " + str(e)]
+
+    if uploaded:
+        msg.append("Following entries Uploaded: {}".format(', '.join(uploaded)))
+    else:
+        msg.append("No Entries uploaded")
+    return msg
+
+
+@login_required
+def paid_upload(request):
+    session_id = request.META['HTTP_COOKIE'].split()[1].split('=')[1]
+    print session_id, "UPLOAD REQ"
+    messages = []
+    print 'rm', request.method
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            ufile = request.FILES['file']
+            if ufile.name.endswith('.xls') or ufile.name.endswith('.xlsx'):
+                msg = handle_paid_excel_file(ufile, int(form.data['sheet_no']))
+            else:
+                msg = [" .xls, .xlsx and .csv file formats are only supported."]
+            messages = msg
+        else:
+            messages.append("Supply appropriate data.")
+    form = UploadFileForm()
+    return render(request, 'SupremeApp/paid_upload.html', locals())
 
 
 def get_supreme_app_data(from_date, to_date, based_on):

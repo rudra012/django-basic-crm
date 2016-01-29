@@ -3,6 +3,7 @@ from django.contrib import admin
 from SupremeApp.models import SupremeModel
 import datetime
 
+
 class SupremeAdmin(admin.ModelAdmin):
     fieldsets = [
         ('',
@@ -25,7 +26,7 @@ class SupremeAdmin(admin.ModelAdmin):
         'caf_num', 'cust_name', 'mdn_no', 'rate_plan', 'otaf_date', 'account_balance', 'no_of_payments_made', 'address',
         'cluster', 'alternate_landline_number', 'alternate_mobile_number', 'email_id', 'bill_cycle', 'attempt',
         'bill_delivery_mode')
-    list_display = ('processed', 'cust_name', 'caf_num', 'final_tc_name', 'status',
+    list_display = ('processed', 'cust_name', 'caf_num', 'mdn_no', 'final_tc_name', 'status',
                     'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
                     'tc_1_attempt_date', 'tc_1_attempt_code', 'tc_1_attempt_remarks',
                     'tc_2_attempt_date', 'tc_2_attempt_code', 'tc_2_attempt_remarks',

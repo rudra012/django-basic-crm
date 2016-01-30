@@ -2,6 +2,7 @@ from django.contrib import admin
 # Register your models here.
 from SupremeApp.models import SupremeModel
 import datetime
+from django.conf import settings
 
 
 class SupremeAdmin(admin.ModelAdmin):
@@ -54,7 +55,17 @@ class SupremeAdmin(admin.ModelAdmin):
         obj.save()
 
     class Media:
-        css = {'all': ('css/no-addanother-button.css',)}
+        css = {'all': ('css/no-addanother-button.css', settings.BASE_DIR + '/static/admin/css/forms.css')}
+
+    # class Media:
+    #     def __init__(self):
+    #         pass
+    #     css = {'all': ('css/no-addanother-button.css',
+    #                    # settings.BASE_DIR + '/static/admin/css/forms.css'
+    #                    )}
+    #     from django.conf import settings
+    #     static_url = getattr(settings, 'STATIC_URL', '/static/')
+    #     js = ['http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js', static_url + 'admin/js/test.js']
 
     def has_add_permission(self, request):
         return False
@@ -70,7 +81,8 @@ class SupremeAdmin(admin.ModelAdmin):
         url_query = bool(request.GET.get('q'))
         url_query = url_query if '_changelist_filters' not in request.GET else True
         if not request.user.is_superuser and not url_query:
-            qs = qs.none()
+            # qs = qs.none()
+            qs = SupremeModel.objects.filter(final_tc_name=request.user)
         return qs
 
 

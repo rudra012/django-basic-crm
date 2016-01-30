@@ -14,9 +14,16 @@ from SupremeApp.models import SupremeModel
 
 def try_to_int(idata):
     try:
-        return int(idata)
+        return int(float(idata))
     except:
         return 0
+
+
+def try_to_str_int(sidata):
+    try:
+        return '%.0f' % sidata
+    except:
+        return sidata
 
 
 def xmldate_to_pdate(xdate):
@@ -48,14 +55,15 @@ def handle_data_excel_file(ufile, sheet_no):
             #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
 
             try:
+                mobile_no = try_to_str_int(sheet.cell(i, 6).value)
                 SupremeModel(
-                    caf_num='%.0f' % sheet.cell(i, 0).value,
+                    caf_num=try_to_str_int(sheet.cell(i, 0).value),
                     cust_name=sheet.cell(i, 1).value,
                     customer_category=sheet.cell(i, 2).value,
                     risk_class_code=sheet.cell(i, 3).value,
                     customer_type=sheet.cell(i, 4).value,
                     customer_ecl=sheet.cell(i, 5).value,
-                    mdn_no='%.0f' % sheet.cell(i, 6).value,
+                    mdn_no=('%.0f' % sheet.cell(i, 6).value)[-10:],
                     adc_status=sheet.cell(i, 7).value,
                     service_type=sheet.cell(i, 8).value,
                     rate_plan=sheet.cell(i, 9).value,
@@ -93,7 +101,7 @@ def handle_data_excel_file(ufile, sheet_no):
                     circle_terr=sheet.cell(i, 41).value,
                     country_terr=sheet.cell(i, 42).value,
                     deposit=sheet.cell(i, 43).value,
-                    no_of_active_services='%.0f' % sheet.cell(i, 44).value,
+                    no_of_active_services=try_to_str_int(sheet.cell(i, 44).value),
                     ecs=sheet.cell(i, 45).value,
                     daf_num=sheet.cell(i, 46).value,
                     ciou_name=sheet.cell(i, 47).value,
@@ -116,7 +124,7 @@ def handle_data_excel_file(ufile, sheet_no):
                     last_bill_issue_date=xmldate_to_pdate(sheet.cell(i, 64).value),
                     last_biil_amount=xmldate_to_pdate(sheet.cell(i, 65).value),
                     last_payment_amount=sheet.cell(i, 66).value,
-                    no_buf_debt_age='%.0f' % sheet.cell(i, 67).value,
+                    no_buf_debt_age=try_to_str_int(sheet.cell(i, 67).value),
                     data_unbilled_amount=sheet.cell(i, 68).value,
                     rconnect_plan=sheet.cell(i, 69).value,
                     bb_plan=sheet.cell(i, 70).value,
@@ -130,8 +138,8 @@ def handle_data_excel_file(ufile, sheet_no):
                     last6_month_score=sheet.cell(i, 78).value,
                     curr_payment_behaviour_class=sheet.cell(i, 79).value,
                     prev_payment_behaviour_class=sheet.cell(i, 80).value,
-                    alternate_landline_number='%.0f' % sheet.cell(i, 81).value,
-                    alternate_mobile_number='%.0f' % sheet.cell(i, 82).value,
+                    alternate_landline_number=try_to_str_int(sheet.cell(i, 81).value),
+                    alternate_mobile_number=try_to_str_int(sheet.cell(i, 82).value),
                     email_id=sheet.cell(i, 83).value,
                     corp_cust_category=sheet.cell(i, 84).value,
                     mnp_flag=sheet.cell(i, 85).value,
@@ -145,7 +153,7 @@ def handle_data_excel_file(ufile, sheet_no):
                     final_tc_name=sheet.cell(i, 93).value,
                     address=", ".join([sheet.cell(i, 51).value, sheet.cell(i, 52).value, sheet.cell(i, 53).value]),
                 ).save()
-                uploaded.append(str(sheet.cell(i, 6).value))
+                uploaded.append(str(mobile_no))
             except Exception, e:
                 print traceback.format_exc()
     except Exception, e:
@@ -204,29 +212,30 @@ def handle_paid_excel_file(ufile, sheet_no):
                 print mobile_no, payment_amt, credit_limit
                 print type(mobile_no), type(payment_amt)
                 paid_user_obj_list = list(SupremeModel.objects.filter(mdn_no=mobile_no))
+                print paid_user_obj_list
                 # Sort to get latest object first
                 paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
-                last_user_obj = paid_user_obj_list[0]
-                print last_user_obj.account_balance
-                print last_user_obj.pending_amount
-                remain_payment = try_to_int(last_user_obj.pending_amount) - try_to_int(last_user_obj.account_balance) \
-                                        - try_to_int(payment_amt)
-                print remain_payment
-                if remain_payment <= 100:
-                    last_user_obj.status = "Paid"
-                else:
-                    last_user_obj.status = "Partial Paid"
-                last_user_obj.save()
+                if paid_user_obj_list:
+                    last_user_obj = paid_user_obj_list[0]
+                    print "&&&&&&&&&&&&&&&&&&&"
+                    remain_payment = try_to_int(last_user_obj.account_balance) - try_to_int(payment_amt)
+                    print last_user_obj.account_balance, payment_amt, remain_payment
+                    if remain_payment < 100:
+                        last_user_obj.status = "Paid"
+                    else:
+                        last_user_obj.status = "Partial Paid"
+                    last_user_obj.save()
+                    uploaded.append(mobile_no)
             except Exception, e:
                 print traceback.format_exc()
     except Exception, e:
         print traceback.format_exc()
         return ["System Error: " + str(e)]
-
+    # msg.append("All Entries Updated")
     if uploaded:
-        msg.append("Following entries Uploaded: {}".format(', '.join(uploaded)))
+        msg.append("Following entries Updated: {}".format(', '.join(uploaded)))
     else:
-        msg.append("No Entries uploaded")
+        msg.append("No Entries Updated")
     return msg
 
 

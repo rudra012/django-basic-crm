@@ -100,26 +100,32 @@ class SupremeModel(models.Model):
     closing_date = models.DateField(null=True)
     address = models.CharField(max_length=300, null=True)
 
-    final_tc_name = models.CharField(max_length=50, null=True)
-    final_calling_date = models.DateTimeField(null=True, verbose_name="Calling Date")
-    final_calling_code = models.CharField(max_length=100, null=True, choices=[("CB",) * 2,
-                                                                              ("RR",) * 2,
-                                                                              ("OS",) * 2,
-                                                                              ("SO",) * 2,
-                                                                              ("CLMPD",) * 2,
-                                                                              ("WPD",) * 2,
-                                                                              ("PAID",) * 2,
-                                                                              ("PARTPAID",) * 2,
-                                                                              ("BD",) * 2,
-                                                                              ("BNR",) * 2,
-                                                                              ("NR",) * 2,
-                                                                              ("RTP",) * 2,
+    tc_name = models.CharField(max_length=50, null=True)
+    calling_date = models.DateTimeField(null=True, verbose_name="Calling Date")
+    calling_code = models.CharField(max_length=100, null=True, choices=[("CB",) * 2,
+                                                                        ("RR",) * 2,
+                                                                        ("OS",) * 2,
+                                                                        ("SO",) * 2,
+                                                                        ("CLMPD",) * 2,
+                                                                        ("WPD",) * 2,
+                                                                        ("PAID",) * 2,
+                                                                        ("PARTPAID",) * 2,
+                                                                        ("BD",) * 2,
+                                                                        ("BNR",) * 2,
+                                                                        ("NR",) * 2,
+                                                                        ("RTP",) * 2,
 
-                                                                              ("PTP",) * 2,
-                                                                              ("Others",) * 2, ],
-                                          verbose_name="Dispo Code")
-    final_calling_remarks = models.CharField(max_length=250, null=True, verbose_name="Remarks")
-    final_followup_date = models.DateTimeField(null=True, verbose_name="CB/PTP Date", blank=True)
+                                                                        ("PTP",) * 2,
+                                                                        ("Others",) * 2, ],
+                                    verbose_name="Dispo Code")
+    calling_remarks = models.CharField(max_length=250, null=True, verbose_name="Remarks")
+    followup_date = models.DateTimeField(null=True, verbose_name="CB/PTP Date", blank=True)
+
+    final_tc_name = models.CharField(max_length=50, null=True)
+    final_calling_date = models.DateTimeField(null=True, verbose_name="Final Calling Date")
+    final_calling_code = models.CharField(max_length=100, null=True, verbose_name="Final Dispo Code")
+    final_calling_remarks = models.CharField(max_length=250, null=True, verbose_name="Final Remarks")
+    final_followup_date = models.DateTimeField(null=True, verbose_name="Final CB/PTP Date", blank=True)
 
     # Export Data
     tc_1_name = models.CharField(max_length=50, null=True)
@@ -166,4 +172,4 @@ class SupremeModel(models.Model):
     date_modified = models.DateTimeField(auto_now_add=False, auto_now=True)  #
 
     def __repr__(self):
-        return "--".join([str(self.attempt), str(self.final_followup_date)])
+        return "--".join([str(self.attempt), str(self.final_followup_date), self.cust_name])

@@ -27,18 +27,20 @@ class SupremeAdmin(admin.ModelAdmin):
         'caf_num', 'cust_name', 'mdn_no', 'rate_plan', 'otaf_date', 'account_balance', 'no_of_payments_made', 'address',
         'cluster', 'alternate_landline_number', 'alternate_mobile_number', 'email_id', 'bill_cycle', 'attempt',
         'bill_delivery_mode')
-    list_display = ('processed', 'cust_name', 'caf_num', 'mdn_no', 'final_tc_name', 'status',
-                    'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
-                    'tc_1_attempt_date', 'tc_1_attempt_code', 'tc_1_attempt_remarks',
-                    'tc_2_attempt_date', 'tc_2_attempt_code', 'tc_2_attempt_remarks',
-                    'tc_3_attempt_date', 'tc_3_attempt_code', 'tc_3_attempt_remarks',
-                    'tc_4_attempt_date', 'tc_4_attempt_code', 'tc_4_attempt_remarks',
-                    'tc_5_attempt_date', 'tc_5_attempt_code', 'tc_5_attempt_remarks',
-                    'tc_6_attempt_date', 'tc_6_attempt_code', 'tc_6_attempt_remarks',
-                    )
+    list_display = (
+        'processed', 'cust_name', 'caf_num', 'mdn_no', 'final_tc_name', 'status',
+        'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
+        'tc_1_attempt_date', 'tc_1_attempt_code', 'tc_1_attempt_remarks',
+        'tc_2_attempt_date', 'tc_2_attempt_code', 'tc_2_attempt_remarks',
+        'tc_3_attempt_date', 'tc_3_attempt_code', 'tc_3_attempt_remarks',
+        'tc_4_attempt_date', 'tc_4_attempt_code', 'tc_4_attempt_remarks',
+        'tc_5_attempt_date', 'tc_5_attempt_code', 'tc_5_attempt_remarks',
+        'tc_6_attempt_date', 'tc_6_attempt_code', 'tc_6_attempt_remarks',
+    )
     search_fields = ('mdn_no', 'cust_name',)
     date_hierarchy = 'date_created'
     list_display_links = ('cust_name',)
+    ordering = ('processed',)
 
     def save_model(self, request, obj, form, change):
         print form.data
@@ -48,6 +50,7 @@ class SupremeAdmin(admin.ModelAdmin):
         print attempt_date
         obj.__setattr__('tc_{}_name'.format(obj.attempt), str(request.user))
         obj.__setattr__('tc_{}_attempt_date'.format(obj.attempt), datetime.datetime.now())
+        obj.__setattr__('final_calling_date'.format(obj.attempt), datetime.datetime.now())
         obj.__setattr__('tc_{}_attempt_code'.format(obj.attempt), form.data['final_calling_code'])
         obj.__setattr__('tc_{}_attempt_remarks'.format(obj.attempt), form.data['final_calling_remarks'])
         obj.processed = True
@@ -83,6 +86,10 @@ class SupremeAdmin(admin.ModelAdmin):
         if not request.user.is_superuser and not url_query:
             # qs = qs.none()
             qs = SupremeModel.objects.filter(final_tc_name=request.user)
+        # print map(lambda x: x.processed, qs)
+        # print map(lambda x: x.final_followup_date, qs)
+        # print filter(lambda x: x.processed, qs)
+        print sorted(qs, key=lambda x: x.processed)
         return qs
 
 

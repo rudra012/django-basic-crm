@@ -101,7 +101,7 @@ class SupremeModel(models.Model):
     address = models.CharField(max_length=300, null=True)
 
     final_tc_name = models.CharField(max_length=50, null=True)
-    final_calling_date = models.DateTimeField(auto_now_add=False, auto_now=True, verbose_name="Calling Date")
+    final_calling_date = models.DateTimeField(null=True, verbose_name="Calling Date")
     final_calling_code = models.CharField(max_length=100, null=True, choices=[("CB",) * 2,
                                                                               ("RR",) * 2,
                                                                               ("OS",) * 2,
@@ -116,7 +116,7 @@ class SupremeModel(models.Model):
                                                                               ("RTP",) * 2,
 
                                                                               ("PTP",) * 2,
-                                                                              ("Others",) * 2,],
+                                                                              ("Others",) * 2, ],
                                           verbose_name="Dispo Code")
     final_calling_remarks = models.CharField(max_length=250, null=True, verbose_name="Remarks")
     final_followup_date = models.DateTimeField(null=True, verbose_name="CB/PTP Date", blank=True)
@@ -125,36 +125,45 @@ class SupremeModel(models.Model):
     tc_1_name = models.CharField(max_length=50, null=True)
     tc_1_attempt_date = models.DateTimeField(null=True)
     tc_1_attempt_code = models.CharField(max_length=100, null=True)
-    tc_1_attempt_remarks = models.CharField(max_length=100, null=True)
+    tc_1_attempt_remarks = models.CharField(max_length=250, null=True)
+    tc_1_attempt_followup = models.DateTimeField(null=True, verbose_name="1st CB/PTP Date", blank=True)
 
     tc_2_name = models.CharField(max_length=50, null=True)
     tc_2_attempt_date = models.DateTimeField(null=True)
     tc_2_attempt_code = models.CharField(max_length=100, null=True)
-    tc_2_attempt_remarks = models.CharField(max_length=100, null=True)
+    tc_2_attempt_remarks = models.CharField(max_length=250, null=True)
+    tc_2_attempt_followup = models.DateTimeField(null=True, verbose_name="2st CB/PTP Date", blank=True)
 
     tc_3_name = models.CharField(max_length=50, null=True)
     tc_3_attempt_date = models.DateTimeField(null=True)
     tc_3_attempt_code = models.CharField(max_length=100, null=True)
-    tc_3_attempt_remarks = models.CharField(max_length=100, null=True)
+    tc_3_attempt_remarks = models.CharField(max_length=250, null=True)
+    tc_3_attempt_followup = models.DateTimeField(null=True, verbose_name="3st CB/PTP Date", blank=True)
 
     tc_4_name = models.CharField(max_length=50, null=True)
     tc_4_attempt_date = models.DateTimeField(null=True)
     tc_4_attempt_code = models.CharField(max_length=100, null=True)
-    tc_4_attempt_remarks = models.CharField(max_length=100, null=True)
+    tc_4_attempt_remarks = models.CharField(max_length=250, null=True)
+    tc_4_attempt_followup = models.DateTimeField(null=True, verbose_name="4st CB/PTP Date", blank=True)
 
     tc_5_name = models.CharField(max_length=50, null=True)
     tc_5_attempt_date = models.DateTimeField(null=True)
     tc_5_attempt_code = models.CharField(max_length=100, null=True)
-    tc_5_attempt_remarks = models.CharField(max_length=100, null=True)
+    tc_5_attempt_remarks = models.CharField(max_length=250, null=True)
+    tc_5_attempt_followup = models.DateTimeField(null=True, verbose_name="5st CB/PTP Date", blank=True)
 
     tc_6_name = models.CharField(max_length=50, null=True)
     tc_6_attempt_date = models.DateTimeField(null=True)
     tc_6_attempt_code = models.CharField(max_length=100, null=True)
-    tc_6_attempt_remarks = models.CharField(max_length=100, null=True)
+    tc_6_attempt_remarks = models.CharField(max_length=250, null=True)
+    tc_6_attempt_followup = models.DateTimeField(null=True, verbose_name="6st CB/PTP Date", blank=True)
 
     status = models.CharField(max_length=100, null=True, default="Unpaid")
 
     processed = models.BooleanField(default=False)
     attempt = models.CharField(max_length=5, null=True, blank=True, default=0)
-    date_created = models.DateTimeField(auto_now_add=True, auto_now=False)
+    date_created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name="Data Uploaded")
     date_modified = models.DateTimeField(auto_now_add=False, auto_now=True)  #
+
+    def __repr__(self):
+        return "--".join([str(self.attempt), str(self.final_followup_date)])

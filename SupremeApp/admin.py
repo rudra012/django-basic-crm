@@ -127,8 +127,34 @@ class SupremeAdmin(admin.ModelAdmin):
             qs = SupremeModel.objects.filter(final_tc_name=request.user)
         # print map(lambda x: x.processed, qs)
         # print map(lambda x: x.final_followup_date, qs)
-        # print filter(lambda x: x.processed, qs)
-        print sorted(qs, key=lambda x: x.processed)
+        print qs
+        # processed_qs = filter(lambda x: x.processed, qs)
+        # call_back_qs = filter(lambda x: x.final_followup_date, qs)
+        # fmt = '%Y-%m-%d %H:%M:%S'
+        make_above_pks = []
+        for model_obj in qs:
+            if model_obj.final_followup_date:
+                time_dif = abs((model_obj.final_followup_date - datetime.datetime.now()).total_seconds() / 60)
+                print time_dif
+                if time_dif < 5:
+                    make_above_pks.append(model_obj.pk)
+        print make_above_pks, "MAKE ABOVE"
+        if make_above_pks:
+            qs = qs.filter(pk__in=make_above_pks)
+        # print dir(qs)
+        # for query_set in make_above_qs:
+        #     qs.delete(query_set)
+        #     qs.append(qs)
+        # for query_set in call_back_qs:
+        #     time_dif = abs((query_set.final_followup_date - datetime.datetime.now()).total_seconds() / 60)
+        #     print time_dif
+        #     if time_dif < 5:
+        #         make_above_qs.append(query_set)
+        # none_processed_qs = filter(lambda x: not x.processed, qs)
+        # print(processed_qs, none_processed_qs)
+        # print call_back_qs
+        # print sorted(qs, key=lambda x: x.processed)
+        # print qs
         return qs
 
 

@@ -1,4 +1,4 @@
 # Created by .ignore support plugin (hsz.mobi)
 *.pyc
-SupremeApp/migrations/*
+SupremeApp/migrations/000*
 .idea/*

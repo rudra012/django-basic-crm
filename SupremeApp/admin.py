@@ -63,14 +63,14 @@ class SupremeAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_created'
     list_display_links = ('cust_name',)
     ordering = ('processed', '-final_followup_date')
-    list_filter = ('processed',)
+    list_filter = ('processed', 'final_calling_code')
 
     def save_model(self, request, obj, form, change):
         print "SAVE MODEL"
         # print form.data
         obj.attempt = int(obj.attempt) + 1
         # print obj.attempt
-        attempt_date = 'tc_%s_attempt_date' % obj.attempt
+        # attempt_date = 'tc_%s_attempt_date' % obj.attempt
         # print attempt_date
         obj.__setattr__('final_tc_name'.format(obj.attempt), str(request.user))
         obj.__setattr__('tc_{}_name'.format(obj.attempt), str(request.user))

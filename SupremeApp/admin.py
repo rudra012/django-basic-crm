@@ -36,7 +36,7 @@ class SupremeAdmin(admin.ModelAdmin):
              ('tc_4_attempt_date', 'tc_4_attempt_code', 'tc_4_attempt_remarks',),
              ('tc_5_attempt_date', 'tc_5_attempt_code', 'tc_5_attempt_remarks',),
              ('tc_6_attempt_date', 'tc_6_attempt_code', 'tc_6_attempt_remarks',),
-             ('final_calling_date', 'final_calling_code', 'final_calling_remarks', 'final_followup_date', ),
+             ('final_calling_date', 'final_calling_code', 'final_calling_remarks', 'final_followup_date',),
          ],
          )),
     ]
@@ -63,6 +63,7 @@ class SupremeAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_created'
     list_display_links = ('cust_name',)
     ordering = ('processed', '-final_followup_date')
+    list_filter = ('processed',)
 
     def save_model(self, request, obj, form, change):
         print "SAVE MODEL"
@@ -125,6 +126,8 @@ class SupremeAdmin(admin.ModelAdmin):
         if not request.user.is_superuser and not url_query:
             # qs = qs.none()
             qs = SupremeModel.objects.filter(final_tc_name=request.user)
+        else:
+            return qs
         # print map(lambda x: x.processed, qs)
         # print map(lambda x: x.final_followup_date, qs)
         print qs

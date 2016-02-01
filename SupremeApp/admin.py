@@ -124,9 +124,10 @@ class SupremeAdmin(admin.ModelAdmin):
         url_query = bool(request.GET.get('q'))
         url_query = url_query if '_changelist_filters' not in request.GET else True
         if not request.user.is_superuser and not url_query:
-            # qs = qs.none()
-            qs = SupremeModel.objects.filter(final_tc_name=request.user)
+            # For Agent
+            qs = SupremeModel.objects.filter(final_tc_name=request.user).filter(~Q(status="Paid"))
         else:
+            # For master
             return qs
         # print map(lambda x: x.processed, qs)
         # print map(lambda x: x.final_followup_date, qs)

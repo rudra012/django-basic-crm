@@ -5,7 +5,7 @@ import datetime
 from django.conf import settings
 from django.db import models
 from django.forms import TextInput, Textarea
-
+from django.db.models import Q
 
 class SupremeAdmin(admin.ModelAdmin):
     formfield_overrides = {

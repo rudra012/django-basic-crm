@@ -1,13 +1,48 @@
-from django.contrib import admin
-# Register your models here.
-from SupremeApp.models import SupremeModel
 import datetime
 from django.conf import settings
+from django.contrib import admin
 from django.db import models
-from django.forms import TextInput, Textarea
 from django.db.models import Q
+from django.forms import TextInput, Textarea
+from SupremeApp.models import SupremeModel, TCModel
+
+
+class TCaddInline(admin.TabularInline):
+    model = TCModel
+    fields = ("calling_code", "followup_date", "calling_remarks",)
+
+    def save_model(self, request, obj, form, change):
+        print "SAVE inline MODEL", dir(obj)
+        print form.data
+        obj.calling_date = datetime.datetime.now()
+        obj.tc_name = str(request.user)
+        obj.save()
+
+    def get_max_num(self, request, obj=None, **kwargs):
+        max_num = 1
+        return max_num
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class TCreadInline(admin.TabularInline):
+    model = TCModel
+    fields = ("calling_code", "followup_date", "calling_remarks", "tc_name", "calling_date")
+    readonly_fields = fields
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 class SupremeAdmin(admin.ModelAdmin):
+    inlines = [TCaddInline, TCreadInline]
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '25', 'width': '50%'})},
         models.TextField: {'widget': Textarea(attrs={'rows': 4, 'cols': 40})},
@@ -24,91 +59,87 @@ class SupremeAdmin(admin.ModelAdmin):
              ('email_id', 'bill_delivery_mode'),
              ('attempt',),
          ], )),
-        ('',
-         dict(fields=[
-             ('calling_code', 'followup_date', 'calling_remarks',),
-         ], )),
+        # ('',
+        #  dict(fields=[
+        #      ('calling_code', 'followup_date', 'calling_remarks',),
+        #  ], )),
         ('TC summery',
          dict(fields=[
-             ('tc_1_attempt_date', 'tc_1_attempt_code', 'tc_1_attempt_remarks',),
-             ('tc_2_attempt_date', 'tc_2_attempt_code', 'tc_2_attempt_remarks',),
-             ('tc_3_attempt_date', 'tc_3_attempt_code', 'tc_3_attempt_remarks',),
-             ('tc_4_attempt_date', 'tc_4_attempt_code', 'tc_4_attempt_remarks',),
-             ('tc_5_attempt_date', 'tc_5_attempt_code', 'tc_5_attempt_remarks',),
-             ('tc_6_attempt_date', 'tc_6_attempt_code', 'tc_6_attempt_remarks',),
-             ('final_calling_date', 'final_calling_code', 'final_calling_remarks', 'final_followup_date',),
+             ('final_calling_code', 'final_followup_date', 'final_calling_remarks', 'final_calling_date',),
          ],
          )),
     ]
     readonly_fields = (
         'caf_num', 'cust_name', 'mdn_no', 'rate_plan', 'otaf_date', 'account_balance', 'no_of_payments_made', 'address',
         'cluster', 'alternate_landline_number', 'alternate_mobile_number', 'email_id', 'bill_cycle', 'attempt',
-        'bill_delivery_mode', 'tc_1_attempt_date', 'tc_1_attempt_code', 'tc_1_attempt_remarks', 'tc_2_attempt_date',
-        'tc_2_attempt_code', 'tc_2_attempt_remarks', 'tc_3_attempt_date', 'tc_3_attempt_code', 'tc_3_attempt_remarks',
-        'tc_4_attempt_date', 'tc_4_attempt_code', 'tc_4_attempt_remarks', 'tc_5_attempt_date', 'tc_5_attempt_code',
-        'tc_5_attempt_remarks', 'tc_6_attempt_date', 'tc_6_attempt_code', 'tc_6_attempt_remarks',
+        'bill_delivery_mode',
         'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
     )
     list_display = (
         'processed', 'cust_name', 'caf_num', 'mdn_no', 'final_tc_name', 'status',
         'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
-        'tc_1_attempt_date', 'tc_1_attempt_code', 'tc_1_attempt_remarks',
-        'tc_2_attempt_date', 'tc_2_attempt_code', 'tc_2_attempt_remarks',
-        'tc_3_attempt_date', 'tc_3_attempt_code', 'tc_3_attempt_remarks',
-        'tc_4_attempt_date', 'tc_4_attempt_code', 'tc_4_attempt_remarks',
-        'tc_5_attempt_date', 'tc_5_attempt_code', 'tc_5_attempt_remarks',
-        'tc_6_attempt_date', 'tc_6_attempt_code', 'tc_6_attempt_remarks',
     )
     search_fields = ('mdn_no', 'cust_name',)
     date_hierarchy = 'date_created'
     list_display_links = ('cust_name',)
     ordering = ('processed', '-final_followup_date')
-    list_filter = ('processed', 'final_calling_code')
+    list_filter = ('processed', 'bill_cycle', 'allocation_date')
+    save_on_top = True
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            print "#############33"
+            print dir(instance)
+            instance.tc_name = str(request.user)
+            instance.calling_date = datetime.datetime.now()
+            instance.save()
+        formset.save()
 
     def save_model(self, request, obj, form, change):
-        print "SAVE MODEL"
-        # print form.data
-        obj.attempt = int(obj.attempt) + 1
-        # print obj.attempt
+        print "SAVE MODEL", dir(obj)
+        print dir(obj.tcmodel_set)
+        print form.data
         # attempt_date = 'tc_%s_attempt_date' % obj.attempt
         # print attempt_date
-        obj.__setattr__('final_tc_name'.format(obj.attempt), str(request.user))
-        obj.__setattr__('tc_{}_name'.format(obj.attempt), str(request.user))
-        obj.__setattr__('tc_{}_attempt_date'.format(obj.attempt), datetime.datetime.now())
-        obj.__setattr__('tc_{}_attempt_code'.format(obj.attempt), form.data['calling_code'])
-        obj.__setattr__('final_calling_code'.format(obj.attempt), form.data['calling_code'])
-        obj.__setattr__('tc_{}_attempt_remarks'.format(obj.attempt), form.data['calling_remarks'])
-        obj.__setattr__('final_calling_remarks', form.data['calling_remarks'])
+        # obj.__setattr__('tc_{}_name'.format(obj.attempt), str(request.user))
+        # obj.__setattr__('tc_{}_attempt_date'.format(obj.attempt), datetime.datetime.now())
+        # obj.__setattr__('tc_{}_attempt_code'.format(obj.attempt), form.data['calling_code'])
+        # obj.__setattr__('final_calling_code'.format(obj.attempt), form.data['calling_code'])
+        # obj.__setattr__('tc_{}_attempt_remarks'.format(obj.attempt), form.data['calling_remarks'])
         # obj.__setattr__('tc_{}_attempt_followup_0'.format(obj.attempt), form.data['followup_date_0'])
         # obj.__setattr__('tc_{}_attempt_followup_1'.format(obj.attempt), form.data['followup_date_1'])
-        obj.__setattr__('tc_{}_attempt_followup'.format(obj.attempt), obj.followup_date)
-        # obj.__setattr__('final_followup_date_0', form.data['followup_date_0'])
-        # obj.__setattr__('final_followup_date_1', form.data['followup_date_1'])
-        obj.final_followup_date = obj.followup_date
-        obj.__setattr__('final_calling_date', datetime.datetime.now())
+        # obj.__setattr__('tc_{}_attempt_followup'.format(obj.attempt), obj.followup_date)
+        # obj.__setattr__('tcmodel_set-0-followup_date', form.data['followup_date_1'])
+        # obj.final_followup_date = obj.followup_date
+        # obj.tcmodel_set-0-followup_date = obj.followup_date
+
+        # obj.__setattr__('final_calling_date', datetime.datetime.now())
         # form.data.pop("followup_date_0")
         # form.data.pop("followup_date_1")
         # form.cleaned_data.pop("followup_date_0")
         # form.cleaned_data.pop("followup_date")
-        obj.followup_date = None
-        obj.calling_remarks = None
-        obj.calling_code = None
-        obj.processed = True
+        # obj.followup_date = None
+        # obj.calling_remarks = None
+        # obj.calling_code = None
+        # print type(form.data['tcmodel_set-0-followup_date_0'])
+        # print type(form.data['tcmodel_set-0-followup_date_1'])
+        final_followup_date = form.data['tcmodel_set-0-followup_date_0'] + " " + \
+                              form.data['tcmodel_set-0-followup_date_1']
+        obj.attempt = int(obj.attempt) + 1
+        obj.__setattr__('final_tc_name', str(request.user))
+        obj.__setattr__('final_calling_remarks', form.data['tcmodel_set-0-calling_remarks'])
+        obj.__setattr__('final_calling_code', form.data['tcmodel_set-0-calling_code'])
+        obj.final_followup_date = datetime.datetime.strptime(final_followup_date, '%Y-%m-%d %H:%M:%S')
+        obj.final_calling_date = datetime.datetime.now()
         obj.final_tc_name = str(request.user)
+        obj.processed = True
         obj.save()
 
     class Media:
-        css = {'all': ('css/no-addanother-button.css', settings.BASE_DIR + '/static/admin/css/forms.css')}
-
-    # class Media:
-    #     def __init__(self):
-    #         pass
-    #     css = {'all': ('css/no-addanother-button.css',
-    #                    # settings.BASE_DIR + '/static/admin/css/forms.css'
-    #                    )}
-    #     from django.conf import settings
-    #     static_url = getattr(settings, 'STATIC_URL', '/static/')
-    #     js = ['http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js', static_url + 'admin/js/test.js']
+        css = {'all': (
+            settings.BASE_DIR + '/static/css/no-addanother-button.css',
+            settings.BASE_DIR + '/static/admin/css/forms.css')}
 
     def has_add_permission(self, request):
         return False

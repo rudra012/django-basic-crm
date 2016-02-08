@@ -78,9 +78,9 @@ WSGI_APPLICATION = 'Supreme.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'supreme',
+        'NAME': 'supreme_new',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'rudra',
     }
 }
 

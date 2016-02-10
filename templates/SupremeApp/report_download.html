@@ -16,15 +16,15 @@
         <a href="/admin/">Admin</a>
     {% endif %}
 </div>
+<h1> **************** Report Download ****************</h1>
 
-<h1> **************** Data Download ****************</h1>
-    {% if form %}
-
-        <form action="/SupremeApp/download/" method="post" id="download_form">
-        {% csrf_token %}
-        {{ form }}
-        <input type="submit" value="Submit" class="default" name="_save" />
-        </form>
-    {% endif %}
+{% if form %}
+    <form action="/SupremeApp/report_download/" method="post" id="download_form">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Download" class="default" name="_save" />
+    </form>
+{% endif %}
 
 {% endblock %}
+

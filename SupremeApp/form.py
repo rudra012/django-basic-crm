@@ -13,3 +13,10 @@ class DownloadFileForm(forms.Form):
     to_date = forms.DateField(required=True, widget=SelectDateWidget, initial=datetime.date.today())
     based_on = forms.ChoiceField(choices=[('Last Modified',) * 2,
                                           ('Create Time',) * 2])
+
+
+class RDownloadFileForm(forms.Form):
+    from_date = forms.DateField(required=True, widget=SelectDateWidget, initial=datetime.date.today())
+    to_date = forms.DateField(required=True, widget=SelectDateWidget, initial=datetime.date.today())
+    # based_on = forms.ChoiceField(choices=[('Last Modified',) * 2,
+    #                                       ('Create Time',) * 2])

@@ -8,8 +8,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from SupremeApp.form import UploadFileForm, DownloadFileForm
-from SupremeApp.models import SupremeModel
+from SupremeApp.form import UploadFileForm, DownloadFileForm, RDownloadFileForm
+from SupremeApp.models import SupremeModel, TCModel
 
 
 def try_to_int(idata):
@@ -261,16 +261,34 @@ def paid_upload(request):
 
 
 def get_supreme_app_data(from_date, to_date, based_on):
+    """
+    This is to collect Supreme App data based on date given by admin
+    :return:
+    """
+    print based_on
     if based_on == "Last Modified":
-        print "in Last modified"
         supreme_data_queryset = SupremeModel.objects.filter(date_modified__range=(from_date, to_date))
     elif based_on == "Create Time":
-        print "in Create time"
         supreme_data_queryset = SupremeModel.objects.filter(date_created__range=(from_date, to_date))
     else:
         supreme_data_queryset = SupremeModel.objects.none()
-
     return supreme_data_queryset
+
+
+class IncrementVar(object):
+    def __init__(self, value=0):
+        self.inc_var = value
+
+    def get_inc_var(self):
+        # print("getting value")
+        self._inc_var += 1
+        return self._inc_var
+
+    def set_inc_var(self, value):
+        # print("setting value %s" % value)
+        self._inc_var = value
+
+    inc_var = property(get_inc_var, set_inc_var)
 
 
 def create_temp_xlsx_file(supreme_app_data):
@@ -281,12 +299,23 @@ def create_temp_xlsx_file(supreme_app_data):
     file_path = '/tmp/temp1.xlsx'
     book = xlsxwriter.Workbook(file_path)
     sheet = book.add_worksheet('CHURN_ENQ REVERT')
+    # sheet.set_tab_color('red')
+
+    # Different formats for attractive xls file
+    bold = book.add_format({'bold': True})
+    red_font = book.add_format({'bold': True, 'font_color': 'red'})
+    red_bg = book.add_format({'bg_color': 'red', 'border': 1})
+    yellow_bg = book.add_format({'bg_color': 'yellow', 'border': 1, 'bold': True})
+    orange_bg = book.add_format({'bg_color': 'orange', 'border': 1})
+    green_bg = book.add_format({'bg_color': 'green', 'border': 1})
 
     date_format = book.add_format({'num_format': 'mm/dd/yyyy'})
     # time_format = book.add_format({'num_format': 'hh:mm:ss'})
     date_time_format = book.add_format({'num_format': 'mm/dd/yy hh:mm AM/PM'})
+    date_time_format_green_bg = book.add_format({'num_format': 'mm/dd/yy hh:mm AM/PM', 'bg_color': 'green', 'border': 1})
     # date_time_format = book.add_format({'num_format': 'yyyy-mm-dd hh:mm:ss'})
     # date_time_format = book.add_format({'num_format': 'mm/dd/yy hh:mm:ss'})
+
     heading = [
         "CAF_NUM",
         "CUST_NAME",
@@ -305,24 +334,6 @@ def create_temp_xlsx_file(supreme_app_data):
         "BILL_CYCLE",
         "BILL_DELIVERY_MODE",
         "TC_NAME",
-        "TC 1st Attempt Date",
-        "TC 1st Attempt Code",
-        "TC 1st Attempt Remarks",
-        "TC 2nd Attempt Date",
-        "TC 2nd Attempt Code",
-        "TC 2nd Attempt Remarks",
-        "TC 3rd Attempt Date",
-        "TC 3rd Attempt Code",
-        "TC 3rd Attempt Remarks",
-        "TC 4th Attempt Date",
-        "TC 4th Attempt Code",
-        "TC 4th Attempt Remarks",
-        "TC 5th Attempt Date",
-        "TC 5th Attempt Code",
-        "TC 5th Attempt Remarks",
-        "TC 6th Attempt Date",
-        "TC 6th Attempt Code",
-        "TC 6th Attempt Remarks",
         "Final Calling Date",
         "Final Calling Code",
         "Final Calling Remarks",
@@ -333,48 +344,46 @@ def create_temp_xlsx_file(supreme_app_data):
         sheet.write(0, i, h)
 
     for i, data in enumerate(supreme_app_data):
-        print "here", i, data
         j = i + 1
-        sheet.write(i + 1, 0, data.caf_num)
-        sheet.write(i + 1, 1, data.cust_name)
-        sheet.write(i + 1, 2, data.mdn_no)
-        sheet.write(i + 1, 3, data.rate_plan)
-        sheet.write(i + 1, 4, data.otaf_date)
-        sheet.write(i + 1, 5, data.account_balance)
-        sheet.write(i + 1, 6, data.no_of_payments_made)
-        sheet.write(i + 1, 7, data.line_1)
-        sheet.write(i + 1, 8, data.line_2)
-        sheet.write(i + 1, 9, data.city)
-        sheet.write(i + 1, 10, data.cluster)
-        sheet.write(i + 1, 11, data.alternate_landline_number)
-        sheet.write(i + 1, 12, data.alternate_mobile_number)
-        sheet.write(i + 1, 13, data.email_id)
-        sheet.write(i + 1, 14, data.bill_cycle)
-        sheet.write(i + 1, 15, data.bill_delivery_mode)
-        sheet.write(i + 1, 16, data.final_tc_name)
-        sheet.write(i + 1, 17, data.tc_1_attempt_date, date_time_format)
-        sheet.write(i + 1, 18, data.tc_1_attempt_code)
-        sheet.write(i + 1, 19, data.tc_1_attempt_remarks)
-        sheet.write(i + 1, 20, data.tc_2_attempt_date, date_time_format)
-        sheet.write(i + 1, 21, data.tc_2_attempt_code)
-        sheet.write(i + 1, 22, data.tc_2_attempt_remarks)
-        sheet.write(i + 1, 23, data.tc_3_attempt_date, date_time_format)
-        sheet.write(i + 1, 24, data.tc_3_attempt_code)
-        sheet.write(i + 1, 25, data.tc_3_attempt_remarks)
-        sheet.write(i + 1, 26, data.tc_4_attempt_date, date_time_format)
-        sheet.write(i + 1, 27, data.tc_4_attempt_code)
-        sheet.write(i + 1, 28, data.tc_4_attempt_remarks)
-        sheet.write(i + 1, 29, data.tc_5_attempt_date, date_time_format)
-        sheet.write(i + 1, 30, data.tc_5_attempt_code)
-        sheet.write(i + 1, 31, data.tc_5_attempt_remarks)
-        sheet.write(i + 1, 32, data.tc_6_attempt_date, date_time_format)
-        sheet.write(i + 1, 33, data.tc_6_attempt_code)
-        sheet.write(i + 1, 34, data.tc_6_attempt_remarks)
-        sheet.write(i + 1, 35, data.final_calling_date, date_time_format)
-        sheet.write(i + 1, 36, data.final_calling_code)
-        sheet.write(i + 1, 37, data.final_calling_remarks)
-        sheet.write(i + 1, 38, data.final_followup_date, date_time_format)
-        sheet.write(i + 1, 39, data.status)
+        i_var = IncrementVar(-1)
+        print j, i_var
+        sheet.write(j, i_var.inc_var, data.caf_num)
+        sheet.write(j, i_var.inc_var, data.cust_name)
+        sheet.write(j, i_var.inc_var, data.mdn_no)
+        sheet.write(j, i_var.inc_var, data.rate_plan)
+        sheet.write(j, i_var.inc_var, data.otaf_date)
+        sheet.write(j, i_var.inc_var, data.account_balance)
+        sheet.write(j, i_var.inc_var, data.no_of_payments_made)
+        sheet.write(j, i_var.inc_var, data.line_1)
+        sheet.write(j, i_var.inc_var, data.line_2)
+        sheet.write(j, i_var.inc_var, data.city)
+        sheet.write(j, i_var.inc_var, data.cluster)
+        sheet.write(j, i_var.inc_var, data.alternate_landline_number)
+        sheet.write(j, i_var.inc_var, data.alternate_mobile_number)
+        sheet.write(j, i_var.inc_var, data.email_id)
+        sheet.write(j, i_var.inc_var, data.bill_cycle)
+        sheet.write(j, i_var.inc_var, data.bill_delivery_mode)
+        sheet.write(j, i_var.inc_var, data.final_tc_name)
+        sheet.write(j, i_var.inc_var, data.final_calling_date, date_time_format)
+        sheet.write(j, i_var.inc_var, data.final_calling_code)
+        sheet.write(j, i_var.inc_var, data.final_calling_remarks)
+        sheet.write(j, i_var.inc_var, data.final_followup_date, date_time_format)
+        sheet.write(j, i_var.inc_var, data.status)
+        tc_details = TCModel.objects.filter(superme_key_id=data.id)
+        print tc_details
+        heading_end = len(heading)
+        for tc_index, detail in enumerate(tc_details):
+            print tc_index, detail
+            i_var_2 = IncrementVar(heading_end - 1)
+            sheet.write(0, i_var_2.inc_var + tc_index, "TC %sth Dispo Code" % (tc_index + 1), yellow_bg)
+            sheet.write(0, i_var_2.inc_var + tc_index, "TC %sth CB/PTP Date" % (tc_index + 1), green_bg)
+            sheet.write(0, i_var_2.inc_var + tc_index, "TC %sth Remarks" % (tc_index + 1), orange_bg)
+            sheet.write(0, i_var_2.inc_var + tc_index, "TC %sth Calling Date" % (tc_index + 1), green_bg)
+            heading_end += 3
+            sheet.write(j, i_var.inc_var, detail.calling_code, yellow_bg)
+            sheet.write(j, i_var.inc_var, detail.followup_date, date_time_format_green_bg)
+            sheet.write(j, i_var.inc_var, detail.calling_remarks, orange_bg)
+            sheet.write(j, i_var.inc_var, detail.calling_date, date_time_format_green_bg)
 
     book.close()
     return file_path
@@ -399,7 +408,6 @@ def download(request):
             supreme_app_data = get_supreme_app_data(datetime.datetime.combine(from_date, datetime.time(0, 0)),
                                                     datetime.datetime.combine(to_date, datetime.time(23, 59)),
                                                     based_on)
-            print supreme_app_data
             if not supreme_app_data:
                 messages.append(" No Search Results")
             else:
@@ -418,6 +426,46 @@ def download(request):
             form = DownloadFileForm()
             # messages.append('Error, previous data not found. Please search again.')
     return render(request, 'SupremeApp/download.html', locals())
+
+
+@login_required
+def report_download(request):
+    session_id = request.META['HTTP_COOKIE'].split()[1].split('=')[1]
+    print session_id, "Required Download REQ"
+    messages = []
+    if request.method == 'POST':
+        print "POST REQ"
+        form = RDownloadFileForm(request.POST)
+        if not form.is_valid():
+            settings.FORM_SESSION[session_id] = form
+            return render(request, 'churn_enq/search.html', locals())
+        else:
+            from_date = form.cleaned_data['from_date']
+            to_date = form.cleaned_data['to_date']
+            based_on = form.data['based_on']
+            print from_date, to_date
+            supreme_app_data = get_supreme_app_data(datetime.datetime.combine(from_date, datetime.time(0, 0)),
+                                                    datetime.datetime.combine(to_date, datetime.time(23, 59)),
+                                                    based_on)
+            print supreme_app_data
+            if not supreme_app_data:
+                messages.append(" No Search Results")
+            else:
+                path = create_temp_xlsx_file(supreme_app_data)
+                response = HttpResponse(file(path, 'r').read())
+                response['Content-Disposition'] = 'attachment;filename=SUPREME_DATA_from_{}_to_{}.xlsx'.format(
+                    from_date, to_date)
+                response['Content-Length'] = os.path.getsize(path)
+                return response
+
+    else:
+        print "GET REQ"
+        if session_id in settings.FORM_SESSION.keys():
+            form = settings.FORM_SESSION[session_id]
+        else:
+            form = RDownloadFileForm()
+            # messages.append('Error, previous data not found. Please search again.')
+    return render(request, 'SupremeApp/report_download.html', locals())
 
 
 @login_required

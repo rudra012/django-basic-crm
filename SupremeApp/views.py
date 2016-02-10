@@ -312,6 +312,7 @@ def create_temp_xlsx_file(supreme_app_data):
     date_format = book.add_format({'num_format': 'mm/dd/yyyy'})
     # time_format = book.add_format({'num_format': 'hh:mm:ss'})
     date_time_format = book.add_format({'num_format': 'mm/dd/yy hh:mm AM/PM'})
+    date_time_format_bold = book.add_format({'num_format': 'mm/dd/yy hh:mm AM/PM', 'bold': True})
     date_time_format_green_bg = book.add_format({'num_format': 'mm/dd/yy hh:mm AM/PM', 'bg_color': 'green', 'border': 1})
     # date_time_format = book.add_format({'num_format': 'yyyy-mm-dd hh:mm:ss'})
     # date_time_format = book.add_format({'num_format': 'mm/dd/yy hh:mm:ss'})
@@ -341,7 +342,7 @@ def create_temp_xlsx_file(supreme_app_data):
         "Status",
     ]
     for i, h in enumerate(heading):
-        sheet.write(0, i, h)
+        sheet.write(0, i, h, bold)
 
     for i, data in enumerate(supreme_app_data):
         j = i + 1
@@ -364,11 +365,12 @@ def create_temp_xlsx_file(supreme_app_data):
         sheet.write(j, i_var.inc_var, data.bill_cycle)
         sheet.write(j, i_var.inc_var, data.bill_delivery_mode)
         sheet.write(j, i_var.inc_var, data.final_tc_name)
-        sheet.write(j, i_var.inc_var, data.final_calling_date, date_time_format)
-        sheet.write(j, i_var.inc_var, data.final_calling_code)
-        sheet.write(j, i_var.inc_var, data.final_calling_remarks)
-        sheet.write(j, i_var.inc_var, data.final_followup_date, date_time_format)
-        sheet.write(j, i_var.inc_var, data.status)
+        sheet.write(j, i_var.inc_var, data.final_calling_date, date_time_format_bold)
+        sheet.write(j, i_var.inc_var, data.final_calling_code, bold)
+        sheet.write(j, i_var.inc_var, data.final_calling_remarks, bold)
+        sheet.write(j, i_var.inc_var, data.final_followup_date, date_time_format_bold)
+        sheet.write(j, i_var.inc_var, data.status, bold)
+
         tc_details = TCModel.objects.filter(superme_key_id=data.id)
         print tc_details
         heading_end = len(heading)

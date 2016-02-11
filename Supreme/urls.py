@@ -13,6 +13,6 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'custom_admin/', include(custom_admin.urls)),
     # url(r'^$', include(admin.site.urls)),
-    url(r'^$', index),
+    url(r'^$', index, name='index'),
     url(r'SupremeApp/', include(SupremeApp.urls)),
 ]

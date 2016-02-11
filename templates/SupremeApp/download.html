@@ -8,6 +8,12 @@
 </html>
 
 {% extends "admin/base_site.html" %}
+{% load i18n admin_static bootstrap_admin_template_tags %}
+
+{% block extrastyle %}{{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/login.css" %}"/>{% endblock %}
+
+
 {% block breadcrumbs %}
 <div class="breadcrumbs">
     <a href='/'>Home</a>
@@ -16,6 +22,16 @@
         <a href="/admin/">Admin</a>
     {% endif %}
 </div>
+
+<ol class="breadcrumb">
+    <li class="home">
+        <a href="{% url 'index' %}" title="Home"><span class="glyphicon glyphicon-home"></span></a>
+    </li>
+    <li>
+        <a href="{% url 'index' %}" title="SupremeApp">Supreme</a>
+    </li>
+    <<li class="active">{% if Site_Name %}{{ Site_Name }}{% endif %}</li>
+</ol>
 
 <h1> **************** Data Download ****************</h1>
     {% if form %}

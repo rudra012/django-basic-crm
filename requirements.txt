@@ -1,3 +1,6 @@
-xlsxwriter
-xlrd
-django
+Django==1.8
+django-bootstrap3==6.2.2
+MySQL-python==1.2.5
+wheel==0.24.0
+xlrd==0.9.4
+XlsxWriter==0.8.4

@@ -1,19 +1,77 @@
 {% extends "admin/base_site.html" %}
+{% load i18n admin_static bootstrap_admin_template_tags %}
+
+{% block extrastyle %}{{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/login.css" %}"/>{% endblock %}
 
 {% block breadcrumbs %}
-<div class="breadcrumbs">
-    <a href='/'>Home</a>
-    {% if user.is_superuser %}
-        <a href="/admin/">Admin</a>
-    {% endif %}
-</div>
-<h1> **************** Supreme Application ****************</h1>
-<h1 ><a href="/SupremeApp/data/">SHOW DATA</a></h1>
-{% if user.is_superuser %}
-    <h1 ><a href="/SupremeApp/download/">DATA DOWNLOAD</a></h1 >
-<h1 ><a href="/SupremeApp/report_download/">REPORT DOWNLOAD</a></h1 >
-<h1 ><a href="/SupremeApp/upload/">DATA UPLOAD</a></h1 >
-<h1 ><a href="/SupremeApp/paid_upload/">PAID FILE UPLOAD</a></h1 >
-{% endif %}
+    <ol class="breadcrumb">
+        <li class="home">
+            <a href="{% url 'index' %}" title="Home"><span class="glyphicon glyphicon-home"></span></a>
+        </li>
+        <li class="active">{% if Site_Name %}{{ Site_Name }}{% endif %}</li>
+    </ol>
+    {#<h1> **************** Supreme Application ****************</h1>#}
+    {#<h1 ><a href="/SupremeApp/data/">SHOW DATA</a></h1>#}
+    {#{% if user.is_superuser %}#}
+    {#    <h1 ><a href="/SupremeApp/download/">DATA DOWNLOAD</a></h1 >#}
+    {#<h1 ><a href="/SupremeApp/report_download/">REPORT DOWNLOAD</a></h1 >#}
+    {#<h1 ><a href="/SupremeApp/upload/">DATA UPLOAD</a></h1 >#}
+    {#<h1 ><a href="/SupremeApp/paid_upload/">PAID FILE UPLOAD</a></h1 >#}
+    {#{% endif %}#}
 
+{% endblock %}
+
+
+{% block content %}
+    <style>
+        #login-form {
+            width: 300px !important;
+        }
+
+        body {
+            padding-top: 0px !important;
+        }
+
+        #content-main {
+            margin-top: 120px;
+        }
+    </style>
+    <div id="content-main">
+        <div class="login-container">
+            <div id="login-form">
+            <span class="input-group-btn">
+                  <button type="submit" class="btn btn-primary btn-block btn-lg"
+                          onclick="window.location='/SupremeApp/download/';">
+                      <span class="glyphicon glyphicon-download"></span>
+                      <span class="text">DATA DOWNLOAD</span></button>
+                </span>
+                {% if user.is_superuser %}
+                    <br/>
+                    <span class="input-group-btn">
+                  <button type="submit" class="btn btn-primary btn-block btn-lg"
+                          onclick="window.location='/SupremeApp/report_download/';">
+                      <span class="glyphicon glyphicon-download-alt"></span>
+                      <span class="text">REPORT DOWNLOAD</span></button>
+                  </button>
+                </span>
+                    <br/>
+                    <span class="input-group-btn">
+                  <button type="submit" class="btn btn-primary btn-block btn-lg"
+                          onclick="window.location='/SupremeApp/upload/';">
+                      <span class="glyphicon glyphicon-upload"></span>
+                      <span class="text">DATA UPLOAD</span></button>
+                  </button>
+                </span>
+                    <br/>
+                    <span class="input-group-btn">
+                  <button type="submit" class="btn btn-primary btn-block btn-lg"
+                          onclick="window.location='/SupremeApp/paid_upload/';">
+                      <span class="glyphicon glyphicon-cloud-upload"></span>
+                      <span class="text">PAID FILE UPLOAD</span></button>
+                  </button>
+                </span>
+                {% endif %}
+            </div>
+        </div>
 {% endblock %}

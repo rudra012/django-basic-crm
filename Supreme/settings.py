@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    'bootstrap_admin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,6 +61,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.core.context_processors.request',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -80,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'supreme_new',
         'USER': 'root',
-        'PASSWORD': 'rudra',
+        'PASSWORD': 'lintel@365',
     }
 }
 
@@ -98,7 +100,6 @@ USE_L10N = True
 
 USE_TZ = False
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
@@ -107,3 +108,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 # TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
 FORM_SESSION = {}  # {session_id : form object}
+
+DAB_FIELD_RENDERER = 'django_admin_bootstrapped.renderers.BootstrapFieldRenderer'
+
+Site_Name = 'Supreme'

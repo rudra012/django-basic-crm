@@ -1,4 +1,5 @@
 from django.db import models
+from bulk_update.manager import BulkUpdateManager
 
 
 class SupremeModel(models.Model):
@@ -98,6 +99,7 @@ class SupremeModel(models.Model):
     allocation_date = models.DateField(null=True)
     closing_date = models.DateField(null=True)
     address = models.CharField(max_length=300, null=True)
+    pending_amt = models.CharField(max_length=30, null=True, verbose_name='Pending Amount')
 
     # tc_name = models.CharField(max_length=50, null=True)
     # calling_date = models.DateTimeField(null=True, verbose_name="Calling Date")
@@ -171,6 +173,7 @@ class SupremeModel(models.Model):
     attempt = models.CharField(max_length=5, null=True, blank=True, default=0)
     date_created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name="Data Uploaded")
     date_modified = models.DateTimeField(auto_now_add=False, auto_now=True)  #
+    objects = BulkUpdateManager()
 
     def __repr__(self):
         return "--".join([str(self.attempt), str(self.final_followup_date), self.cust_name])

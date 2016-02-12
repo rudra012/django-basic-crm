@@ -12,8 +12,8 @@ class TCaddInline(admin.TabularInline):
     fields = ("calling_code", "followup_date", "calling_remarks",)
 
     def save_model(self, request, obj, form, change):
-        print "SAVE inline MODEL", dir(obj)
-        print form.data
+        # print "SAVE inline MODEL", dir(obj)
+        # print form.data
         obj.calling_date = datetime.datetime.now()
         obj.tc_name = str(request.user)
         obj.save()
@@ -76,7 +76,7 @@ class SupremeAdmin(admin.ModelAdmin):
         'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
     )
     list_display = (
-        'processed', 'cust_name', 'caf_num', 'mdn_no', 'final_tc_name', 'status',
+        'processed', 'cust_name', 'caf_num', 'mdn_no', 'final_tc_name', 'status', 'pending_amt', 'account_balance',
         'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
     )
     search_fields = ('mdn_no', 'cust_name',)
@@ -89,17 +89,16 @@ class SupremeAdmin(admin.ModelAdmin):
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
         for instance in instances:
-            print "#############33"
-            print dir(instance)
+            # print dir(instance)
             instance.tc_name = str(request.user)
             instance.calling_date = datetime.datetime.now()
             instance.save()
         formset.save()
 
     def save_model(self, request, obj, form, change):
-        print "SAVE MODEL", dir(obj)
-        print dir(obj.tcmodel_set)
-        print form.data
+        # print "SAVE MODEL", dir(obj)
+        # print dir(obj.tcmodel_set)
+        # print form.data
         # attempt_date = 'tc_%s_attempt_date' % obj.attempt
         # print attempt_date
         # obj.__setattr__('tc_{}_name'.format(obj.attempt), str(request.user))
@@ -162,7 +161,7 @@ class SupremeAdmin(admin.ModelAdmin):
             return qs
         # print map(lambda x: x.processed, qs)
         # print map(lambda x: x.final_followup_date, qs)
-        print qs
+        # print qs
         # processed_qs = filter(lambda x: x.processed, qs)
         # call_back_qs = filter(lambda x: x.final_followup_date, qs)
         # fmt = '%Y-%m-%d %H:%M:%S'
@@ -170,10 +169,10 @@ class SupremeAdmin(admin.ModelAdmin):
         for model_obj in qs:
             if model_obj.final_followup_date:
                 time_dif = abs((model_obj.final_followup_date - datetime.datetime.now()).total_seconds() / 60)
-                print time_dif
+                # print time_dif
                 if time_dif < 5:
                     make_above_pks.append(model_obj.pk)
-        print make_above_pks, "MAKE ABOVE"
+        # print make_above_pks, "MAKE ABOVE"
         if make_above_pks:
             qs = qs.filter(pk__in=make_above_pks)
         # print dir(qs)

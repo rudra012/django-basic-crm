@@ -1,25 +1,74 @@
+{% extends "admin/base_site.html" %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Upload Supreme Data</title>
+    <title>Paid File Upload</title>
 </head>
 <body>
 
 </body>
-{% extends "admin/base_site.html" %}
+
+{% load i18n admin_static bootstrap %}
+
+{% block extrastyle %}{{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    {{ form.media }}
+{% endblock %}
+
+{% block breadcrumbs %}
+
+<ol class="breadcrumb">
+    <li class="home">
+        <a href="{% url 'index' %}" title="Home"><span class="glyphicon glyphicon-home"></span></a>
+    </li>
+    <li>
+        <a href="/SupremeApp/" title="SupremeApp">{% if SITE_NAME %}{{ SITE_NAME }}{% endif %}</a>
+    </li>
+    <li class="active">Data File Upload</li>
+</ol>
+{% endblock %}
 
 {% block content %}
-{% if form %}
 
-<form enctype="multipart/form-data" method="post" action="">
-
-    {% csrf_token %}
-    <h1> **************** PAID FILE UPLOAD ****************</h1>
-    {{ form }}
-    <input type="submit" value="Submit" class="default" name="_save" />
-
-</form>
-{% endif %}
+    <style>
+        body {
+            padding-top: 0px !important;
+        }
+    .row {
+        margin-right: 0px !important;
+        margin-left: 0px !important;
+    }
+    </style>
+    <div id="content-main">
+        {% if form %}
+            <form enctype="multipart/form-data" method="post" action="">
+                {% csrf_token %}
+                <div class="col-sm-9 form-fields">
+                    <div class="panel panel-default form-panel">
+                        <a href="#" class="form-expand">
+                            <span class="glyphicon glyphicon-resize-horizontal "></span>
+                        </a>
+                        <div class="panel-body">
+                            <div class="row">
+                            {{ form|bootstrap_horizontal }}
+                                </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3 form-buttons">
+                    <div data-spy="affix" data-offset-top="125">
+                        <div class="submit-row list-group">
+                            <button type="submit" title="Save" class="list-group-item active" name="_save">
+                                <span class="glyphicon glyphicon-floppy-disk"></span>
+                                <span class="text">Save</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+    </div>
 {% endblock %}
 </html>

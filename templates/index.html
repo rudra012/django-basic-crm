@@ -30,17 +30,23 @@
     <div id="content-main">
         <div class="login-container">
             <div id="login-form">
-            <span class="input-group-btn">
+            {% if user.is_superuser %}
+                <span class="input-group-btn">
                   <button type="submit" class="btn btn-primary btn-block btn-lg" onclick="window.location='/admin/';">
                       Admin
                   </button>
                 </span>
                 <br/>
+             {% else %}
+                <script>
+                    window.location = '/SupremeApp/data/';
+                </script>
+            {% endif %}
             <span class="input-group-btn">
                   <button type="submit" class="btn btn-primary btn-block btn-lg"
-                          onclick="window.location='/SupremeApp/';">Supreme
+                          onclick="window.location='/SupremeApp/';">{{ SITE_NAME }}
                   </button>
-                </span>
+            </span>
             </div>
         </div>
     </div>

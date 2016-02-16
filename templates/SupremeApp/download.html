@@ -69,3 +69,40 @@
         {% endif %}
     </div>
 {% endblock %}
+
+{% block js %}
+  <script>
+    (function ($) {
+      $(document).ready(function(){
+        $('.vManyToManyRawIdAdminField, .vForeignKeyRawIdAdminField').addClass('form-control');
+        $('.form-row input[type="checkbox"]').closest('li')
+                                             .addClass('checkbox');
+        $('.radiolist li').addClass('radio');
+
+        $('.form-expand').on('click', function () {
+          $form_fields = $('.form-fields');
+          $form_buttons = $('.form-buttons');
+          if ($form_fields.hasClass('expanded')) {
+            // contract form
+            $form_fields.removeClass('col-sm-11 expanded')
+                        .addClass('col-sm-9');
+            $form_buttons.removeClass('col-sm-1 contracted')
+                         .addClass('col-sm-3');
+            $form_buttons.find('.object-tools')
+                         .removeClass('btn-group-vertical')
+                         .addClass('btn-group btn-group-justified');
+          } else {
+            // expand form
+            $form_fields.removeClass('col-sm-9')
+                        .addClass('col-sm-11 expanded');
+            $form_buttons.removeClass('col-sm-3')
+                         .addClass('col-sm-1 contracted');
+            $form_buttons.find('.object-tools')
+                         .addClass('btn-group-vertical')
+                         .removeClass('btn-group btn-group-justified');
+          }
+        });
+      });
+    })(django.jQuery);
+  </script>
+{% endblock js %}

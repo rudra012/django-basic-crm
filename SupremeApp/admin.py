@@ -153,9 +153,9 @@ class SupremeAdmin(admin.ModelAdmin):
         obj.save()
 
     class Media:
-        css = {'all': (
-            settings.BASE_DIR + '/static/css/no-addanother-button.css',
-            settings.BASE_DIR + '/static/admin/css/forms.css'), }
+        # css = {'all': (
+        #     settings.BASE_DIR + '/static/css/no-addanother-button.css',
+        #     settings.BASE_DIR + '/static/admin/css/forms.css'), }
 
         js = ['/static/admin/js/test.js']
 

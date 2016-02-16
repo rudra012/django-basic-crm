@@ -35,6 +35,7 @@ INSTALLED_APPS = (
     'bootstrapform',
     'bootstrap3_datepicker',
     'datetimewidget',
+    'floppyforms',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

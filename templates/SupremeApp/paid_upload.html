@@ -12,22 +12,22 @@
 {% load i18n admin_static bootstrap %}
 
 {% block extrastyle %}{{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}"/>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     {{ form.media }}
 {% endblock %}
 
 {% block breadcrumbs %}
 
-<ol class="breadcrumb">
-    <li class="home">
-        <a href="{% url 'index' %}" title="Home"><span class="glyphicon glyphicon-home"></span></a>
-    </li>
-    <li>
-        <a href="/SupremeApp/" title="SupremeApp">{% if SITE_NAME %}{{ SITE_NAME }}{% endif %}</a>
-    </li>
-    <li class="active">Data File Upload</li>
-</ol>
+    <ol class="breadcrumb">
+        <li class="home">
+            <a href="{% url 'index' %}" title="Home"><span class="glyphicon glyphicon-home"></span></a>
+        </li>
+        <li>
+            <a href="/SupremeApp/" title="SupremeApp">{% if SITE_NAME %}{{ SITE_NAME }}{% endif %}</a>
+        </li>
+        <li class="active">Data File Upload</li>
+    </ol>
 {% endblock %}
 
 {% block content %}
@@ -36,10 +36,18 @@
         body {
             padding-top: 0px !important;
         }
-    .row {
-        margin-right: 0px !important;
-        margin-left: 0px !important;
-    }
+
+        .row {
+            margin-right: 0px !important;
+            margin-left: 0px !important;
+        }
+
+        #id_file {
+            padding: 0px 12px !important;
+            border: none;
+            background-color: transparent;
+            box-shadow: none;
+        }
     </style>
     <div id="content-main">
         {% if form %}
@@ -52,8 +60,23 @@
                         </a>
                         <div class="panel-body">
                             <div class="row">
-                            {{ form|bootstrap_horizontal }}
+                                {{ form|bootstrap_horizontal }}
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2 col-lg-2 "></label>
+                                    <div class=" col-sm-10 col-lg-10 ">
+                                        <input name="sheet_no_text" value="100" id="id_sheet_no_text"
+                                               class="form-control" type="text" readonly="">
+                                    </div>
                                 </div>
+
+                                <script type="text/javascript">
+                                    $(document).ready(function () {
+                                        $("#id_sheet_no").change(function () {
+                                            $('#id_sheet_no_text').val(this.value);
+                                        });
+                                    });
+                                </script>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -71,4 +94,41 @@
         {% endif %}
     </div>
 {% endblock %}
+
+{% block js %}
+  <script>
+    (function ($) {
+      $(document).ready(function(){
+        $('.vManyToManyRawIdAdminField, .vForeignKeyRawIdAdminField').addClass('form-control');
+        $('.form-row input[type="checkbox"]').closest('li')
+                                             .addClass('checkbox');
+        $('.radiolist li').addClass('radio');
+
+        $('.form-expand').on('click', function () {
+          $form_fields = $('.form-fields');
+          $form_buttons = $('.form-buttons');
+          if ($form_fields.hasClass('expanded')) {
+            // contract form
+            $form_fields.removeClass('col-sm-11 expanded')
+                        .addClass('col-sm-9');
+            $form_buttons.removeClass('col-sm-1 contracted')
+                         .addClass('col-sm-3');
+            $form_buttons.find('.object-tools')
+                         .removeClass('btn-group-vertical')
+                         .addClass('btn-group btn-group-justified');
+          } else {
+            // expand form
+            $form_fields.removeClass('col-sm-9')
+                        .addClass('col-sm-11 expanded');
+            $form_buttons.removeClass('col-sm-3')
+                         .addClass('col-sm-1 contracted');
+            $form_buttons.find('.object-tools')
+                         .addClass('btn-group-vertical')
+                         .removeClass('btn-group btn-group-justified');
+          }
+        });
+      });
+    })(django.jQuery);
+  </script>
+{% endblock js %}
 </html>

@@ -6,10 +6,18 @@ from bootstrap3_datepicker.widgets import DatePickerInput
 
 from .models import SupremeModel
 
+import floppyforms as forms
+
+
+class Slider(forms.RangeInput):
+    min = 5
+    max = 1000
+    step = 5
+
 
 class UploadFileForm(forms.Form):
     file = forms.FileField()
-    sheet_no = forms.IntegerField(min_value=1, initial=1)
+    sheet_no = forms.IntegerField(min_value=5, initial=100, widget=Slider)
 
 
 class DownloadFileForm(forms.Form):

@@ -702,7 +702,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     percent_format = book.add_format({'num_format': '0.00%'})
 
     # Set the columns widths.
-    sheet.set_column("A:G", 12)
+    sheet.set_column("A:G", 15)
 
     # *****************         Cluster wise Performance        *****************
     caption = "Cluster wise Performance"
@@ -761,7 +761,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     ]
     options = {
         'data': cluster_wise_performance_data,
-        'style': 'Table Style Light 11',
+        'style': 'Table Style Medium 9',
         'total_row': True,
         # 'autofilter': False,
         'banded_rows': False, 'banded_columns': True,
@@ -830,7 +830,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     ]
     options = {
         'data': tc_wise_performance_data,
-        'style': 'Table Style Light 11',
+        'style': 'Table Style Medium 10',
         'total_row': True,
         # 'autofilter': False,
         'banded_rows': False, 'banded_columns': True,
@@ -898,7 +898,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     ]
     options = {
         'data': product_wise_performance_data,
-        'style': 'Table Style Light 11',
+        'style': 'Table Style Medium 11',
         'total_row': True,
         # 'autofilter': False,
         'banded_rows': False, 'banded_columns': True,
@@ -912,12 +912,32 @@ def create_temp_xlsx_report_file(supreme_app_data):
     # *****************         Day Wie Resolution Trend         *****************
 
     print "\n\n\n\n"
-    SM = SupremeModel.objects.values('cluster').annotate(alloc_cnt=Sum('no_of_active_services'))
-    day_wise_trend_data = [[1, 2, 3], [1, 2, 3]]
-    days = list(set(map(lambda x: x['date_modified'].date(), SupremeModel.objects.values('date_modified').distinct())))
+    SM = supreme_app_data.values('cluster').annotate(alloc_cnt=Sum('no_of_active_services'))
+
+    days = list(set(map(lambda x: x['date_modified'].date(), supreme_app_data.values('date_modified').distinct())))
     print days
     days.sort()
     clusters = map(lambda x: x['cluster'], SupremeModel.objects.values('cluster').distinct())
+
+    print "\n\n"
+    day_wise_trend_data = []
+    day_wise_trend_percent = []
+    for tdata in SM:
+        day_tc_list = [tdata['cluster'], tdata['alloc_cnt']]
+        print "\n"
+        for day in days:
+            day_paid_data = supreme_app_data.filter(status='Paid', date_modified__year=day.strftime("%Y"), date_modified__month=day.strftime("%m"),
+                                                    date_modified__day=day.strftime("%d"), cluster=tdata['cluster']).aggregate(res_cnt=Sum('no_of_active_services'))
+            if day_paid_data['res_cnt']:
+                day_tc_list.append(day_paid_data['res_cnt'])
+                day_wise_trend_percent.append(float(100 * day_paid_data['res_cnt'] / tdata['alloc_cnt']))
+            else:
+                day_tc_list.append(0)
+                day_wise_trend_percent.append(0.0)
+        day_wise_trend_data.append(day_tc_list)
+    print day_wise_trend_data
+
+
     column_list = [
         {'header': 'Product',
          'total_string': 'Totals'
@@ -927,9 +947,9 @@ def create_temp_xlsx_report_file(supreme_app_data):
          },
     ]
     for day in days:
-        column_list.append({'header': day.strftime("%Y-%m-%d"),
-                            'format': date_format,
-                            # 'total_function': 'sum',
+        column_list.append({'header': day.strftime("%d/%B"),
+                            # 'format': date_format,
+                            'total_function': 'sum',
                             })
     print column_list
 
@@ -941,7 +961,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
 
     options = {
         'data': day_wise_trend_data,
-        'style': 'Table Style Light 11',
+        'style': 'Table Style Medium 12',
         'total_row': True,
         # 'autofilter': False,
         'banded_rows': False, 'banded_columns': True,
@@ -951,7 +971,15 @@ def create_temp_xlsx_report_file(supreme_app_data):
     }
 
     nlast_raw = last_raw + len(day_wise_trend_data) + 4
-    sheet.add_table(last_raw + 3, 0, nlast_raw, len(column_list) + 1, options)
+    sheet.add_table(last_raw + 3, 0, nlast_raw, len(column_list) - 1, options)
+
+    nlast_raw += 2
+    sheet.merge_range('A%d:B%d' % (nlast_raw, nlast_raw), 'Per Day Res Cnt %', bold)
+
+    col= 2
+    for percent in day_wise_trend_percent:
+        sheet.write(nlast_raw-1, col, "%.2f" %percent+"%")
+        col += 1
 
     book.close()
     return file_path

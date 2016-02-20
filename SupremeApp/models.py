@@ -175,8 +175,8 @@ class SupremeModel(models.Model):
     date_modified = models.DateTimeField(auto_now_add=False, auto_now=True)  #
     objects = BulkUpdateManager()
 
-    def __repr__(self):
-        return "--".join([str(self.attempt), str(self.final_followup_date), self.cust_name])
+    # def __repr__(self):
+    #     return "--".join([str(self.attempt), str(self.final_followup_date), self.cust_name])
 
 
 class TCModel(models.Model):

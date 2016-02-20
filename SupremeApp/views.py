@@ -5,6 +5,7 @@ import xlrd
 import xlsxwriter
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -693,56 +694,265 @@ def create_temp_xlsx_report_file(supreme_app_data):
     green_bg = book.add_format({'bg_color': 'green', 'border': 1})
 
     date_format = book.add_format({'num_format': 'mm/dd/yyyy'})
-    # time_format = book.add_format({'num_format': 'hh:mm:ss'})
+    time_format = book.add_format({'num_format': 'hh:mm:ss'})
     date_time_format = book.add_format({'num_format': 'mm/dd/yy hh:mm AM/PM'})
     date_time_format_bold = book.add_format({'num_format': 'mm/dd/yy hh:mm AM/PM', 'bold': True})
     date_time_format_green_bg = book.add_format(
         {'num_format': 'mm/dd/yy hh:mm AM/PM', 'bg_color': 'green', 'border': 1})
-    # date_time_format = book.add_format({'num_format': 'yyyy-mm-dd hh:mm:ss'})
-    # date_time_format = book.add_format({'num_format': 'mm/dd/yy hh:mm:ss'})
+    percent_format = book.add_format({'num_format': '0.00%'})
 
-    heading = [
-        "Cluster",
-        "Alloc Cnt",
-        "Alloc Val",
-        "Res Cnt",
-        "Res Val",
-        "Res Cnt %",
-        "Res Val%"
+    # Set the columns widths.
+    sheet.set_column("A:G", 12)
+
+    # *****************         Cluster wise Performance        *****************
+    caption = "Cluster wise Performance"
+    sheet.write('C2:F2', caption, bold)
+
+    cluster_data = supreme_app_data.values('cluster').annotate(alloc_cnt=Sum('no_of_active_services'),
+                                                               alloc_val=Sum('account_balance'))
+    cluster_paid_data = supreme_app_data.filter(status='Paid').values('cluster').annotate(
+        res_cnt=Sum('no_of_active_services'),
+        res_val=Sum('account_balance'))
+
+    print cluster_data
+    print cluster_paid_data
+    cluster_paid_data_dict = {i['cluster']: i for i in cluster_paid_data}
+    print cluster_paid_data_dict
+    cluster_wise_performance_data = []
+    for cdata in cluster_data:
+        cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
+        if cdata['cluster'] in cluster_paid_data_dict:
+            cluster_list.append(cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
+            cluster_list.append(cluster_paid_data_dict[cdata['cluster']]['res_val'])
+            cluster_list.append(float(cluster_list[3] / cluster_list[1]))
+            cluster_list.append(float(cluster_list[4] / cluster_list[2]))
+        else:
+            cluster_list.append(0)
+            cluster_list.append(0)
+            cluster_list.append(0)
+            cluster_list.append(0)
+        cluster_wise_performance_data.append(cluster_list)
+    print cluster_wise_performance_data
+
+    column_list = [
+        {'header': 'Cluster',
+         'total_string': 'Totals'
+         },
+        {'header': 'Alloc Cnt',
+         'total_function': 'sum',
+         },
+        {'header': 'Alloc Val',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Cnt',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Val',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Cnt %',
+         'total_function': 'average',
+         'format': percent_format,
+         },
+        {'header': 'Res Val%',
+         'total_function': 'average',
+         'format': percent_format,
+         },
     ]
-    data = [[]]
     options = {
-        'data': data,
-        'total_row': 1,
-        'columns': [{'header': 'Cluster', 'total_string': 'Totals'},
-                    {'header': 'Alloc Cnt',
-                     'total_function': 'sum',
-                     },
-                    {'header': 'Alloc Val',
-                     'total_function': 'sum',
-                     },
-                    {'header': 'Res Cnt',
-                     'total_function': 'sum',
-                     },
-                    {'header': 'Res Val',
-                     'total_function': 'sum',
-                     },
-                    {'header': 'Res Cnt %',
-                     'total_function': 'sum',
-                     },
-                    {'header': 'Res Val%',
-                     'total_function': 'sum',
-                     },
-                    {'header': 'Year',
-                     # 'formula': '=SUM(Table12[@[Quarter 1]:[Quarter 4]])',
-                     'total_function': 'sum',
-                     },
-                    ]}
-    sheet.add_table("A3:G8", options)
-    for i, data in enumerate(supreme_app_data):
-        j = i + 1
-        i_var = IncrementVar(-1)
-        print j, i_var
+        'data': cluster_wise_performance_data,
+        'style': 'Table Style Light 11',
+        'total_row': True,
+        # 'autofilter': False,
+        'banded_rows': False, 'banded_columns': True,
+        'first_column': True, 'last_column': True,
+        # 'name': 'Cluster wise Performance',
+        'columns': column_list
+    }
+
+    last_raw = 4 + len(cluster_wise_performance_data)
+    sheet.add_table(2, 0, last_raw, len(column_list) - 1, options)
+
+    # *****************         TC wise Performance         *****************
+    caption = "TC wise Performance"
+    sheet.write('C' + str(last_raw + 2), caption, bold)
+
+    tc_data = supreme_app_data.values('final_tc_name').annotate(alloc_cnt=Sum('no_of_active_services'),
+                                                                alloc_val=Sum('account_balance'))
+    tc_paid_data = supreme_app_data.values('final_tc_name').filter(status='Paid').annotate(
+        res_cnt=Sum('no_of_active_services'),
+        res_val=Sum('account_balance'))
+
+    print tc_data
+    print tc_paid_data
+    tc_paid_data_dict = {i['final_tc_name']: i for i in tc_paid_data}
+    print tc_paid_data_dict
+    tc_wise_performance_data = []
+    for tdata in tc_data:
+        tc_list = [tdata['final_tc_name'], tdata['alloc_cnt'], tdata['alloc_val']]
+        if tdata['final_tc_name'] in tc_paid_data_dict:
+            tc_list.append(tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'])
+            tc_list.append(tc_paid_data_dict[tdata['final_tc_name']]['res_val'])
+            tc_list.append(float(tc_list[3] / tc_list[1]))
+            tc_list.append(float(tc_list[4] / tc_list[2]))
+        else:
+            tc_list.append(0)
+            tc_list.append(0)
+            tc_list.append(0)
+            tc_list.append(0)
+        tc_wise_performance_data.append(tc_list)
+    print tc_wise_performance_data
+
+    column_list = [
+        {'header': 'TC Name',
+         'total_string': 'Totals'
+         },
+        {'header': 'Alloc Cnt',
+         'total_function': 'sum',
+         },
+        {'header': 'Alloc Val',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Cnt',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Val',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Cnt %',
+         'total_function': 'average',
+         'format': percent_format,
+         },
+        {'header': 'Res Val%',
+         'total_function': 'average',
+         'format': percent_format,
+         },
+    ]
+    options = {
+        'data': tc_wise_performance_data,
+        'style': 'Table Style Light 11',
+        'total_row': True,
+        # 'autofilter': False,
+        'banded_rows': False, 'banded_columns': True,
+        'first_column': True, 'last_column': True,
+        # 'name': 'Cluster wise Performance',
+        'columns': column_list
+    }
+    nlast_raw = last_raw + len(tc_wise_performance_data) + 4
+    sheet.add_table(last_raw + 3, 0, nlast_raw, len(column_list) - 1, options)
+
+    # *****************         Product wise Performance         *****************
+    caption = "Product wise Performance"
+    sheet.write('C' + str(nlast_raw + 2), caption, bold)
+
+    product_data = supreme_app_data.values('service_subtype').annotate(alloc_cnt=Sum('no_of_active_services'),
+                                                                       alloc_val=Sum('account_balance'))
+    product_paid_data = supreme_app_data.values('service_subtype').filter(status='Paid').annotate(
+        res_cnt=Sum('no_of_active_services'),
+        res_val=Sum('account_balance'))
+
+    print product_data
+    print product_paid_data
+    product_paid_data_dict = {i['service_subtype']: i for i in product_paid_data}
+    print product_paid_data_dict
+    product_wise_performance_data = []
+    for tdata in product_data:
+        product_list = [tdata['service_subtype'], tdata['alloc_cnt'], tdata['alloc_val']]
+        if tdata['service_subtype'] in product_paid_data_dict:
+            product_list.append(product_paid_data_dict[tdata['service_subtype']]['res_cnt'])
+            product_list.append(product_paid_data_dict[tdata['service_subtype']]['res_val'])
+            product_list.append(float(product_list[3] / product_list[1]))
+            product_list.append(float(product_list[4] / product_list[2]))
+        else:
+            product_list.append(0)
+            product_list.append(0)
+            product_list.append(0)
+            product_list.append(0)
+        product_wise_performance_data.append(product_list)
+    print product_wise_performance_data
+
+    column_list = [
+        {'header': 'Product',
+         'total_string': 'Totals'
+         },
+        {'header': 'Alloc Cnt',
+         'total_function': 'sum',
+         },
+        {'header': 'Alloc Val',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Cnt',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Val',
+         'total_function': 'sum',
+         },
+        {'header': 'Res Cnt %',
+         'total_function': 'average',
+         'format': percent_format,
+         },
+        {'header': 'Res Val%',
+         'total_function': 'average',
+         'format': percent_format,
+         },
+    ]
+    options = {
+        'data': product_wise_performance_data,
+        'style': 'Table Style Light 11',
+        'total_row': True,
+        # 'autofilter': False,
+        'banded_rows': False, 'banded_columns': True,
+        'first_column': True, 'last_column': True,
+        # 'name': 'Cluster wise Performance',
+        'columns': column_list
+    }
+    last_raw = nlast_raw + len(product_wise_performance_data) + 4
+    sheet.add_table(nlast_raw + 3, 0, last_raw, len(column_list) - 1, options)
+
+    # *****************         Day Wie Resolution Trend         *****************
+
+    print "\n\n\n\n"
+    SM = SupremeModel.objects.values('cluster').annotate(alloc_cnt=Sum('no_of_active_services'))
+    day_wise_trend_data = [[1, 2, 3], [1, 2, 3]]
+    days = list(set(map(lambda x: x['date_modified'].date(), SupremeModel.objects.values('date_modified').distinct())))
+    print days
+    days.sort()
+    clusters = map(lambda x: x['cluster'], SupremeModel.objects.values('cluster').distinct())
+    column_list = [
+        {'header': 'Product',
+         'total_string': 'Totals'
+         },
+        {'header': 'Alloc Cnt',
+         'total_function': 'sum',
+         },
+    ]
+    for day in days:
+        column_list.append({'header': day.strftime("%Y-%m-%d"),
+                            'format': date_format,
+                            # 'total_function': 'sum',
+                            })
+    print column_list
+
+    # for SMmodel in SM:
+    #     print SupremeModel.objects.filter(status='Paid').filter(cluster=SMmodel['cluster']).values(
+    #         'date_modified').annotate(
+    #         alloc_cnt=Sum('no_of_active_services'))
+    #     day_wise_trend_data[SMmodel['cluster']] = {}
+
+    options = {
+        'data': day_wise_trend_data,
+        'style': 'Table Style Light 11',
+        'total_row': True,
+        # 'autofilter': False,
+        'banded_rows': False, 'banded_columns': True,
+        'first_column': True, 'last_column': True,
+        # 'name': 'Cluster wise Performance',
+        'columns': column_list
+    }
+
+    nlast_raw = last_raw + len(day_wise_trend_data) + 4
+    sheet.add_table(last_raw + 3, 0, nlast_raw, len(column_list) + 1, options)
+
     book.close()
     return file_path
 
@@ -810,13 +1020,13 @@ def report_download(request):
                 messages.append(" No Search Results")
             else:
                 path = create_temp_xlsx_report_file(supreme_app_data)
-                # response = HttpResponse(file(path, 'r').read())
-                # response['Content-Disposition'] = 'attachment;filename=SUPREME_DATA_from_{}_to_{}.xlsx'.format(
-                #     from_date, to_date)
-                # response['Content-Length'] = os.path.getsize(path)
+                response = HttpResponse(file(path, 'r').read())
+                response['Content-Disposition'] = 'attachment;filename=SUPREME_DATA_from_{}_to_{}.xlsx'.format(
+                    from_date, to_date)
+                response['Content-Length'] = os.path.getsize(path)
                 print path
                 os.remove(path)
-                # return response
+                return response
     else:
         print "GET REQ"
         if session_id in settings.FORM_SESSION.keys():

@@ -11,7 +11,9 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from SupremeApp.form import UploadFileForm, DownloadFileForm, RDownloadFileForm
 from SupremeApp.models import SupremeModel, TCModel
-
+from django.contrib.auth.models import User
+from django.db.models import Q
+from django.db.models import Count
 
 def try_to_int(idata):
     try:
@@ -714,10 +716,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
         res_cnt=Sum('no_of_active_services'),
         res_val=Sum('account_balance'))
 
-    print cluster_data
-    print cluster_paid_data
+    # print cluster_data
+    # print cluster_paid_data
     cluster_paid_data_dict = {i['cluster']: i for i in cluster_paid_data}
-    print cluster_paid_data_dict
+    # print cluster_paid_data_dict
     cluster_wise_performance_data = []
     for cdata in cluster_data:
         cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
@@ -732,7 +734,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
             cluster_list.append(0)
             cluster_list.append(0)
         cluster_wise_performance_data.append(cluster_list)
-    print cluster_wise_performance_data
+    # print cluster_wise_performance_data
 
     column_list = [
         {'header': 'Cluster',
@@ -783,10 +785,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
         res_cnt=Sum('no_of_active_services'),
         res_val=Sum('account_balance'))
 
-    print tc_data
-    print tc_paid_data
+    # print tc_data
+    # print tc_paid_data
     tc_paid_data_dict = {i['final_tc_name']: i for i in tc_paid_data}
-    print tc_paid_data_dict
+    # print tc_paid_data_dict
     tc_wise_performance_data = []
     for tdata in tc_data:
         tc_list = [tdata['final_tc_name'], tdata['alloc_cnt'], tdata['alloc_val']]
@@ -801,7 +803,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
             tc_list.append(0)
             tc_list.append(0)
         tc_wise_performance_data.append(tc_list)
-    print tc_wise_performance_data
+    # print tc_wise_performance_data
 
     column_list = [
         {'header': 'TC Name',
@@ -851,10 +853,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
         res_cnt=Sum('no_of_active_services'),
         res_val=Sum('account_balance'))
 
-    print product_data
-    print product_paid_data
+    # print product_data
+    # print product_paid_data
     product_paid_data_dict = {i['service_subtype']: i for i in product_paid_data}
-    print product_paid_data_dict
+    # print product_paid_data_dict
     product_wise_performance_data = []
     for tdata in product_data:
         product_list = [tdata['service_subtype'], tdata['alloc_cnt'], tdata['alloc_val']]
@@ -869,7 +871,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
             product_list.append(0)
             product_list.append(0)
         product_wise_performance_data.append(product_list)
-    print product_wise_performance_data
+    # print product_wise_performance_data
 
     column_list = [
         {'header': 'Product',
@@ -910,32 +912,34 @@ def create_temp_xlsx_report_file(supreme_app_data):
     sheet.add_table(nlast_raw + 3, 0, last_raw, len(column_list) - 1, options)
 
     # *****************         Day Wie Resolution Trend         *****************
+    caption = "Day Wie Resolution Trend"
+    sheet.write('C' + str(last_raw + 2), caption, bold)
 
-    print "\n\n\n\n"
+    # print "\n\n\n\n"
     SM = supreme_app_data.values('cluster').annotate(alloc_cnt=Sum('no_of_active_services'))
 
     days = list(set(map(lambda x: x['date_modified'].date(), supreme_app_data.values('date_modified').distinct())))
-    print days
+    # print days
     days.sort()
     clusters = map(lambda x: x['cluster'], SupremeModel.objects.values('cluster').distinct())
 
-    print "\n\n"
+    # print "\n\n"
     day_wise_trend_data = []
-    day_wise_trend_percent = []
+    day_wise_trend_percent = ['Per Day Res Cnt %', '']
     for tdata in SM:
         day_tc_list = [tdata['cluster'], tdata['alloc_cnt']]
-        print "\n"
+        # print "\n"
         for day in days:
             day_paid_data = supreme_app_data.filter(status='Paid', date_modified__year=day.strftime("%Y"), date_modified__month=day.strftime("%m"),
                                                     date_modified__day=day.strftime("%d"), cluster=tdata['cluster']).aggregate(res_cnt=Sum('no_of_active_services'))
             if day_paid_data['res_cnt']:
                 day_tc_list.append(day_paid_data['res_cnt'])
-                day_wise_trend_percent.append(float(100 * day_paid_data['res_cnt'] / tdata['alloc_cnt']))
+                day_wise_trend_percent.append(float(day_paid_data['res_cnt'] / tdata['alloc_cnt']))
             else:
                 day_tc_list.append(0)
                 day_wise_trend_percent.append(0.0)
         day_wise_trend_data.append(day_tc_list)
-    print day_wise_trend_data
+    # print day_wise_trend_data
 
 
     column_list = [
@@ -951,7 +955,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
                             # 'format': date_format,
                             'total_function': 'sum',
                             })
-    print column_list
+    # print column_list
 
     # for SMmodel in SM:
     #     print SupremeModel.objects.filter(status='Paid').filter(cluster=SMmodel['cluster']).values(
@@ -962,10 +966,9 @@ def create_temp_xlsx_report_file(supreme_app_data):
     options = {
         'data': day_wise_trend_data,
         'style': 'Table Style Medium 12',
-        'total_row': True,
         # 'autofilter': False,
         'banded_rows': False, 'banded_columns': True,
-        'first_column': True, 'last_column': True,
+        'first_column': True, 'last_column': False,
         # 'name': 'Cluster wise Performance',
         'columns': column_list
     }
@@ -973,6 +976,35 @@ def create_temp_xlsx_report_file(supreme_app_data):
     nlast_raw = last_raw + len(day_wise_trend_data) + 4
     sheet.add_table(last_raw + 3, 0, nlast_raw, len(column_list) - 1, options)
 
+    day_wise_trend_percent_tmp = []
+    day_wise_trend_percent_tmp.append(day_wise_trend_percent)
+    # print day_wise_trend_percent_tmp
+
+    column_list = [
+        {'header': 'Product'
+         },
+        {'header': 'Alloc Cnt'
+         },
+    ]
+    for day in days:
+        column_list.append({'header': '',
+                            'format': percent_format,
+                            })
+
+    options = {
+        'data': day_wise_trend_percent_tmp,
+        'style': 'Table Style Medium 12',
+        # 'autofilter': False,
+        'banded_rows': False, 'banded_columns': True,
+        'first_column': True, 'last_column': False,
+        # 'name': 'Cluster wise Performance',
+        'columns': column_list,
+        'header_row': False
+    }
+
+    last_raw = nlast_raw + len(day_wise_trend_percent_tmp) + 1
+    sheet.add_table(nlast_raw + 1, 0, last_raw, len(column_list) - 1, options)
+    """
     nlast_raw += 2
     sheet.merge_range('A%d:B%d' % (nlast_raw, nlast_raw), 'Per Day Res Cnt %', bold)
 
@@ -980,6 +1012,299 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for percent in day_wise_trend_percent:
         sheet.write(nlast_raw-1, col, "%.2f" %percent+"%")
         col += 1
+    """
+
+    # *****************         Invoice wise Performance        *****************
+    caption = "Invoice wise Performance"
+    sheet.write('C' + str(last_raw + 2), caption, bold)
+
+    cluster_data = supreme_app_data.values('cluster').annotate(alloc_cnt=Sum('no_of_active_services'),
+                                                               alloc_val=Sum('account_balance'))
+    cluster_paid_data = supreme_app_data.filter(status='Paid').values('cluster').annotate(
+        res_cnt=Sum('no_of_active_services'),
+        res_val=Sum('account_balance'))
+
+    # print cluster_data
+    # print cluster_paid_data
+    cluster_paid_data_dict = {i['cluster']: i for i in cluster_paid_data}
+    # print cluster_paid_data_dict
+    cluster_wise_performance_data = []
+    for cdata in cluster_data:
+        cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
+        if cdata['cluster'] in cluster_paid_data_dict:
+            cluster_list.append(cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
+            cluster_list.append(cluster_paid_data_dict[cdata['cluster']]['res_val'])
+            cluster_list.append(float(cluster_list[3] / cluster_list[1]))
+            cluster_list.append(float(cluster_list[4] / cluster_list[2]))
+        else:
+            cluster_list.append(0)
+            cluster_list.append(0)
+            cluster_list.append(0)
+            cluster_list.append(0)
+        cluster_wise_performance_data.append(cluster_list)
+
+        # no_of_invoice_raised
+        for i in range(1, 4):
+            cluster_invoice_raised_data = supreme_app_data.filter(no_of_invoice_raised=float(i), cluster=cdata['cluster']).aggregate(alloc_cnt=Sum('no_of_active_services'), alloc_val=Sum('account_balance'))
+            cluster_invoice_raised_paid_data = supreme_app_data.filter(status='Paid', no_of_invoice_raised=float(i), cluster=cdata['cluster']).aggregate(
+                res_cnt=Sum('no_of_active_services'), res_val=Sum('account_balance'))
+            print cluster_invoice_raised_data
+            print cluster_invoice_raised_paid_data
+            # print cluster_invoice_raised_paid_data
+            # cluster_invoice_raised_paid_data_dict = {i['cluster']: i for i in cluster_invoice_raised_paid_data}
+            # print cluster_paid_data_dict
+            cluster_list = [i]
+            if cluster_invoice_raised_data['alloc_cnt'] is not None:
+                cluster_list.append(cluster_invoice_raised_data['alloc_cnt'])
+                cluster_list.append(cluster_invoice_raised_data['alloc_val'])
+            else:
+                cluster_list.append(0)
+                cluster_list.append(0)
+            if cluster_invoice_raised_paid_data['res_cnt'] is not None:
+                cluster_list.append(cluster_invoice_raised_paid_data['res_cnt'])
+                cluster_list.append(cluster_invoice_raised_paid_data['res_val'])
+                cluster_list.append(float(cluster_list[3] / cluster_list[1]))
+                cluster_list.append(float(cluster_list[4] / cluster_list[2]))
+            else:
+                cluster_list.append(0)
+                cluster_list.append(0)
+                cluster_list.append(0)
+                cluster_list.append(0)
+            cluster_wise_performance_data.append(cluster_list)
+
+    total_cluster_data = supreme_app_data.aggregate(alloc_cnt=Sum('no_of_active_services'),
+                                                    alloc_val=Sum('account_balance'))
+    total_cluster_paid_data = supreme_app_data.filter(status='Paid').aggregate(res_cnt=Sum('no_of_active_services'),
+                                                                               res_val=Sum('account_balance'))
+
+    cluster_list = ['Totals']
+    cluster_list.append(total_cluster_data['alloc_cnt'])
+    cluster_list.append(total_cluster_data['alloc_val'])
+    cluster_list.append(total_cluster_paid_data['res_cnt'])
+    cluster_list.append(total_cluster_paid_data['res_val'])
+    cluster_list.append(float(cluster_list[3] / cluster_list[1]))
+    cluster_list.append(float(cluster_list[4] / cluster_list[2]))
+
+    cluster_wise_performance_data.append(cluster_list)
+    # print cluster_wise_performance_data
+
+    column_list = [
+        {'header': 'Cluster',
+         },
+        {'header': 'Alloc Cnt',
+         },
+        {'header': 'Alloc Val',
+         },
+        {'header': 'Res Cnt',
+         },
+        {'header': 'Res Val',
+         },
+        {'header': 'Res Cnt %',
+         'format': percent_format,
+         },
+        {'header': 'Res Val%',
+         'format': percent_format,
+         },
+    ]
+    options = {
+        'data': cluster_wise_performance_data,
+        'style': 'Table Style Medium 9',
+        'total_row': True,
+        # 'autofilter': False,
+        'banded_rows': True, 'banded_columns': True,
+        'first_column': True, 'last_column': True,
+        # 'name': 'Cluster wise Performance',
+        'columns': column_list
+    }
+
+    nlast_raw = last_raw + len(cluster_wise_performance_data) + 4
+    sheet.add_table(last_raw + 3, 0, nlast_raw, len(column_list) - 1, options)
+
+    # *****************         User Wise Data         *****************
+    users = User.objects.all()
+    users = ['SUNITA', 'MANSI']
+    for user in users:
+        caption = user + " Report"
+        sheet.write('C' + str(nlast_raw + 2), caption, bold)
+
+        column_list = [
+            {'header': ' ',
+             },
+        ]
+        for day in days:
+            column_list.append({'header': day.strftime("%d/%B"),
+                                })
+
+        user_wise_trend_data = []
+        no_call_list = ['No.of Calls']
+        repeat = ['Repeat']
+        fresh = ['Fresh']
+        repeat_percent = ['Repeat %']
+        fresh_percent = ['Fresh %']
+        contact = ['Contact']
+        no_contact = ['No Contact']
+        contact_percent = ['Contact %']
+        no_contact_percent = ['No Contact %']
+        DISPO_LIST = ['DISPO LIST']
+        CB = ['CB']
+        RR = ['RR']
+        OS = ['OS']
+        SO = ['SO']
+        CLMPD = ['CLMPD']
+        WPD = ['WPD']
+        PAID = ['PAID']
+        PARTPAID = ['PARTPAID']
+        BD = ['BD']
+        BNR = ['BNR']
+        NR = ['NR']
+        RTP = ['RTP']
+        PTP = ['PTP']
+        CANCELLATION = ['CANCELLATION']
+        SALES_ISSUE = ['SALES ISSUE']
+        WAIVERS = ['WAIVERS']
+        Others = ['Others']
+        for day in days:
+            user_supreme_app_data = supreme_app_data.filter(processed=True, final_calling_date__year=day.strftime("%Y"),
+                                                    final_calling_date__month=day.strftime("%m"),
+                                                    final_calling_date__day=day.strftime("%d"), final_tc_name=user)
+
+            total_call = user_supreme_app_data.count()
+            no_call_list.append(total_call)
+
+            total_repeat = 0
+
+            # total_repeat = user_supreme_app_data.annotate(mdn_no_count=Count('mdn_no')).filter(mdn_no_count__gt=1)
+            print total_repeat
+            total_repeat = 0
+            repeat.append(total_repeat)
+
+            total_fresh = 0
+            # total_fresh = user_supreme_app_data.annotate(mdn_no_count=Count('mdn_no')).filter(mdn_no_count=1)
+            fresh.append(total_fresh)
+
+            if total_call != 0 and total_repeat != 0:
+                repeat_percent.append(str(float(100 * total_repeat / total_call)) + "%")
+            else:
+                repeat_percent.append("0%")
+
+            if total_call != 0 and total_fresh != 0:
+                fresh_percent.append(str(float(100 * total_fresh / total_call)) + "%")
+            else:
+                fresh_percent.append("0%")
+
+            no_contact_list = ['CB', 'RR', 'SO', 'NR']
+
+            total_contact = user_supreme_app_data.filter(~Q(final_calling_code__in=no_contact_list)).count()
+            contact.append(total_contact)
+
+            total_no_contact = user_supreme_app_data.filter(final_calling_code__in=no_contact_list).count()
+            no_contact.append(total_no_contact)
+
+            if total_call != 0 and total_contact != 0:
+                contact_percent.append(str(float(100 * total_contact / total_call)) + "%")
+            else:
+                contact_percent.append("0%")
+
+            if total_call != 0 and total_no_contact != 0:
+                no_contact_percent.append(str(float(100 * total_no_contact / total_call)) + "%")
+            else:
+                no_contact_percent.append("0%")
+
+            DISPO_LIST.append('')
+
+            total_CB = user_supreme_app_data.filter(final_calling_code='CB').count()
+            CB.append(total_CB)
+
+            total_RR = user_supreme_app_data.filter(final_calling_code='RR').count()
+            RR.append(total_RR)
+
+            total_OS = user_supreme_app_data.filter(final_calling_code='OS').count()
+            OS.append(total_OS)
+
+            total_SO = user_supreme_app_data.filter(final_calling_code='SO').count()
+            SO.append(total_SO)
+
+            total_CLMPD = user_supreme_app_data.filter(final_calling_code='CLMPD').count()
+            CLMPD.append(total_CLMPD)
+
+            total_WPD = user_supreme_app_data.filter(final_calling_code='WPD').count()
+            WPD.append(total_WPD)
+
+            total_PAID = user_supreme_app_data.filter(final_calling_code='PAID').count()
+            PAID.append(total_PAID)
+
+            total_PARTPAID = user_supreme_app_data.filter(final_calling_code='PARTPAID').count()
+            PARTPAID.append(total_PARTPAID)
+
+            total_BD = user_supreme_app_data.filter(final_calling_code='BD').count()
+            BD.append(total_BD)
+
+            total_BNR = user_supreme_app_data.filter(final_calling_code='BNR').count()
+            BNR.append(total_BNR)
+
+            total_NR = user_supreme_app_data.filter(final_calling_code='NR').count()
+            NR.append(total_NR)
+
+            total_RTP = user_supreme_app_data.filter(final_calling_code='RTP').count()
+            RTP.append(total_RTP)
+
+            total_PTP = user_supreme_app_data.filter(final_calling_code='PTP').count()
+            PTP.append(total_PTP)
+
+            total_CANCELLATION = user_supreme_app_data.filter(final_calling_code='CANCELLATION').count()
+            CANCELLATION.append(total_CANCELLATION)
+
+            total_SALES_ISSUE = user_supreme_app_data.filter(final_calling_code='SALES_ISSUE').count()
+            SALES_ISSUE.append(total_SALES_ISSUE)
+
+            total_WAIVERS = user_supreme_app_data.filter(final_calling_code='WAIVERS').count()
+            WAIVERS.append(total_WAIVERS)
+
+            total_Others = user_supreme_app_data.filter(final_calling_code='Others').count()
+            Others.append(total_Others)
+
+        user_wise_trend_data.append(no_call_list)
+        user_wise_trend_data.append(repeat)
+        user_wise_trend_data.append(fresh)
+        user_wise_trend_data.append(repeat_percent)
+        user_wise_trend_data.append(fresh_percent)
+        user_wise_trend_data.append(contact)
+        user_wise_trend_data.append(no_contact)
+        user_wise_trend_data.append(contact_percent)
+        user_wise_trend_data.append(no_contact_percent)
+        user_wise_trend_data.append(DISPO_LIST)
+        user_wise_trend_data.append(CB)
+        user_wise_trend_data.append(RR)
+        user_wise_trend_data.append(OS)
+        user_wise_trend_data.append(SO)
+        user_wise_trend_data.append(CLMPD)
+        user_wise_trend_data.append(WPD)
+        user_wise_trend_data.append(PAID)
+        user_wise_trend_data.append(PARTPAID)
+        user_wise_trend_data.append(BD)
+        user_wise_trend_data.append(BNR)
+        user_wise_trend_data.append(NR)
+        user_wise_trend_data.append(RTP)
+        user_wise_trend_data.append(PTP)
+        user_wise_trend_data.append(CANCELLATION)
+        user_wise_trend_data.append(SALES_ISSUE)
+        user_wise_trend_data.append(WAIVERS)
+        user_wise_trend_data.append(Others)
+
+        options = {
+            'data': user_wise_trend_data,
+            'style': 'Table Style Medium 10',
+            # 'autofilter': False,
+            'banded_rows': False, 'banded_columns': True,
+            'first_column': True, 'last_column': False,
+            # 'name': 'Cluster wise Performance',
+            'columns': column_list
+        }
+
+        last_raw = nlast_raw + len(user_wise_trend_data) + 4
+        sheet.add_table(nlast_raw + 3, 0, last_raw, len(column_list) - 1, options)
+
+        nlast_raw = last_raw
 
     book.close()
     return file_path

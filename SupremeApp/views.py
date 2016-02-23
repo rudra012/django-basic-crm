@@ -966,6 +966,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     options = {
         'data': day_wise_trend_data,
         'style': 'Table Style Medium 12',
+        'total_row': True,
         # 'autofilter': False,
         'banded_rows': False, 'banded_columns': True,
         'first_column': True, 'last_column': False,
@@ -1122,18 +1123,19 @@ def create_temp_xlsx_report_file(supreme_app_data):
 
     # *****************         User Wise Data         *****************
     users = User.objects.all()
-    users = ['SUNITA', 'MANSI']
     for user in users:
-        caption = user + " Report"
+        caption = str(user) + " Report"
         sheet.write('C' + str(nlast_raw + 2), caption, bold)
 
         column_list = [
             {'header': ' ',
              },
         ]
-        for day in days:
-            column_list.append({'header': day.strftime("%d/%B"),
-                                })
+
+        column_list1 = [
+            {'header': ' ',
+             },
+        ]
 
         user_wise_trend_data = []
         no_call_list = ['No.of Calls']
@@ -1163,34 +1165,44 @@ def create_temp_xlsx_report_file(supreme_app_data):
         SALES_ISSUE = ['SALES ISSUE']
         WAIVERS = ['WAIVERS']
         Others = ['Others']
+
+        call_days = []
         for day in days:
             user_supreme_app_data = supreme_app_data.filter(processed=True, final_calling_date__year=day.strftime("%Y"),
                                                     final_calling_date__month=day.strftime("%m"),
                                                     final_calling_date__day=day.strftime("%d"), final_tc_name=user)
 
             total_call = user_supreme_app_data.count()
+            if not total_call:
+                continue
+            call_days.append(day)
+            column_list.append({'header': day.strftime("%d/%B"), })
+            column_list1.append({'header': day.strftime("%d/%B"),
+                                'format': percent_format,
+                                })
             no_call_list.append(total_call)
 
             total_repeat = 0
-
-            # total_repeat = user_supreme_app_data.annotate(mdn_no_count=Count('mdn_no')).filter(mdn_no_count__gt=1)
-            print total_repeat
-            total_repeat = 0
-            repeat.append(total_repeat)
-
             total_fresh = 0
-            # total_fresh = user_supreme_app_data.annotate(mdn_no_count=Count('mdn_no')).filter(mdn_no_count=1)
+            for supreme_data in user_supreme_app_data:
+                total_record_count = supreme_data.tcmodel_set.count()
+                if total_record_count > 1:
+                    total_repeat += 1
+                else:
+                    total_fresh += 1
+
+            repeat.append(total_repeat)
             fresh.append(total_fresh)
 
             if total_call != 0 and total_repeat != 0:
-                repeat_percent.append(str(float(100 * total_repeat / total_call)) + "%")
+                repeat_percent.append(float(100 * total_repeat / total_call) / 100)
             else:
-                repeat_percent.append("0%")
+                repeat_percent.append(0)
 
             if total_call != 0 and total_fresh != 0:
-                fresh_percent.append(str(float(100 * total_fresh / total_call)) + "%")
+                fresh_percent.append(float(100 * total_fresh / total_call) / 100)
             else:
-                fresh_percent.append("0%")
+                fresh_percent.append(0)
 
             no_contact_list = ['CB', 'RR', 'SO', 'NR']
 
@@ -1201,14 +1213,14 @@ def create_temp_xlsx_report_file(supreme_app_data):
             no_contact.append(total_no_contact)
 
             if total_call != 0 and total_contact != 0:
-                contact_percent.append(str(float(100 * total_contact / total_call)) + "%")
+                contact_percent.append(float(100 * total_contact / total_call) / 100)
             else:
-                contact_percent.append("0%")
+                contact_percent.append(0)
 
             if total_call != 0 and total_no_contact != 0:
-                no_contact_percent.append(str(float(100 * total_no_contact / total_call)) + "%")
+                no_contact_percent.append(float(100 * total_no_contact / total_call) / 100)
             else:
-                no_contact_percent.append("0%")
+                no_contact_percent.append(0)
 
             DISPO_LIST.append('')
 
@@ -1263,15 +1275,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
             total_Others = user_supreme_app_data.filter(final_calling_code='Others').count()
             Others.append(total_Others)
 
-        user_wise_trend_data.append(no_call_list)
-        user_wise_trend_data.append(repeat)
-        user_wise_trend_data.append(fresh)
-        user_wise_trend_data.append(repeat_percent)
-        user_wise_trend_data.append(fresh_percent)
-        user_wise_trend_data.append(contact)
-        user_wise_trend_data.append(no_contact)
-        user_wise_trend_data.append(contact_percent)
-        user_wise_trend_data.append(no_contact_percent)
+        # Total Column
+        column_list.append({'header': 'Totals',
+                        'formula': '=SUM(Table7[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
+                        'total_function': 'sum',
+                        })
+
         user_wise_trend_data.append(DISPO_LIST)
         user_wise_trend_data.append(CB)
         user_wise_trend_data.append(RR)
@@ -1290,10 +1299,17 @@ def create_temp_xlsx_report_file(supreme_app_data):
         user_wise_trend_data.append(SALES_ISSUE)
         user_wise_trend_data.append(WAIVERS)
         user_wise_trend_data.append(Others)
+        user_wise_trend_data.append(no_call_list)
+        user_wise_trend_data.append(repeat)
+        user_wise_trend_data.append(fresh)
+        user_wise_trend_data.append(contact)
+        user_wise_trend_data.append(no_contact)
 
+        print column_list
         options = {
             'data': user_wise_trend_data,
             'style': 'Table Style Medium 10',
+            'total_row': False,
             # 'autofilter': False,
             'banded_rows': False, 'banded_columns': True,
             'first_column': True, 'last_column': False,
@@ -1301,8 +1317,38 @@ def create_temp_xlsx_report_file(supreme_app_data):
             'columns': column_list
         }
 
-        last_raw = nlast_raw + len(user_wise_trend_data) + 4
+        last_raw = nlast_raw + len(user_wise_trend_data) + 2
         sheet.add_table(nlast_raw + 3, 0, last_raw, len(column_list) - 1, options)
+
+        nlast_raw = last_raw
+
+        column_list1.append({'header': 'Avg',
+                        'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
+                        'total_function': 'average',
+                        'format': percent_format,
+                        })
+
+        user_wise_trend_data = []
+        user_wise_trend_data.append(repeat_percent)
+        user_wise_trend_data.append(fresh_percent)
+        user_wise_trend_data.append(contact_percent)
+        user_wise_trend_data.append(no_contact_percent)
+
+        options = {
+            'data': user_wise_trend_data,
+            'style': 'Table Style Medium 10',
+            'total_row': 0,
+            # 'autofilter': False,
+            'banded_rows': False, 'banded_columns': True,
+            'first_column': True, 'last_column': False,
+            # 'name': 'Cluster wise Performance',
+            'columns': column_list1,
+            'header_row': False
+
+        }
+
+        last_raw = nlast_raw + len(user_wise_trend_data) + 2
+        sheet.add_table(nlast_raw + 1, 0, last_raw, len(column_list1) - 1, options)
 
         nlast_raw = last_raw
 

@@ -2,6 +2,9 @@ import datetime
 from django.conf import settings
 from django.contrib import admin
 from django.db import models
+from string import join
+
+from .models import *
 from django.db.models import Q
 from django.forms import TextInput, Textarea
 from datetimewidget.widgets import DateTimeWidget
@@ -39,7 +42,7 @@ class TCaddInline(admin.TabularInline):
         'autoclose': True
     }
     formfield_overrides = {
-        models.DateTimeField: {'widget': DateTimeWidget(options = dateTimeOptions,)},
+        models.DateTimeField: {'widget': DateTimeWidget(options=dateTimeOptions,)},
     }
 
 
@@ -209,4 +212,46 @@ class SupremeAdmin(admin.ModelAdmin):
         return qs
 
 
+class SettingAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    list_display = ('title', 'active_days', 'time', 'no_of_backup_days')
+    fields = ['title', 'days', 'time', 'no_of_backup_days']
+    readonly_fields = ['title']
+
+    def active_days(self, instance):
+        lst = []
+        if isinstance(instance.days, list):
+            for v in instance.days:
+                lst.append(dict(instance.days_list)[v])
+            return join(lst, ", ")
+        else:
+            return "-"
+    dateTimeOptions = {
+        'format': 'hh:ii:00',
+        'pickerPosition': 'top-right',
+        'minuteStep': 5,
+        'startDate': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d'),
+        'showMeridian': False,
+        'startView': 1,
+        'maxView': 1,
+        'autoclose': True
+    }
+
+    formfield_overrides = {
+        models.TimeField: {'widget': DateTimeWidget(options=dateTimeOptions,)},
+    }
+
+
+class UserDetailAdmin(admin.ModelAdmin):
+    fields = ('name', 'email')
+    list_display = ('name', 'email')
+
+
 admin.site.register(SupremeModel, SupremeAdmin)
+admin.site.register(UserDetail, UserDetailAdmin)
+admin.site.register(Setting, SettingAdmin)

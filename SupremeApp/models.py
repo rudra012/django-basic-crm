@@ -1,5 +1,7 @@
 from django.db import models
 from bulk_update.manager import BulkUpdateManager
+from multiselectfield import MultiSelectField
+import datetime
 
 
 class SupremeModel(models.Model):
@@ -203,3 +205,19 @@ class TCModel(models.Model):
     followup_date = models.DateTimeField(null=True, verbose_name="CB/PTP Date", blank=True)
     calling_date = models.DateTimeField(null=True, verbose_name="Calling Date")
     superme_key = models.ForeignKey(SupremeModel, on_delete=models.CASCADE)
+
+
+class Setting(models.Model):
+
+    title = models.CharField(max_length=50)
+    days_list = (('sun', 'Sunday'), ('mon', 'Monday'), ('tue', 'Tuesday'), ('wed', 'Wednesday'), ('thu', 'Thursday'),
+                 ('fri', 'Friday'), ('sat', 'Saturday'))
+    days = MultiSelectField(choices=days_list, max_length=50, blank=True, null=True)
+    time = models.TimeField(default=datetime.datetime.now().time())
+    no_of_backup_days = models.DecimalField(default=1, max_digits=1, decimal_places=0, verbose_name="No. of days")
+
+
+class UserDetail(models.Model):
+    name = models.CharField(max_length=50, default=None)
+    email = models.EmailField()
+    created_date = models.DateTimeField(default=datetime.datetime.now())

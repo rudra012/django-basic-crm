@@ -37,16 +37,22 @@
                   </button>
                 </span>
                 <br/>
+                <span class="input-group-btn">
+                      <button type="submit" class="btn btn-primary btn-block btn-lg"
+                              onclick="window.location='/SupremeApp/';">{{ SITE_NAME }}
+                      </button>
+                </span>
+                <br />
+                <span class="input-group-btn">
+                  <button type="submit" class="btn btn-primary btn-block btn-lg" onclick="window.location='/admin/SupremeApp/setting/';">
+                      Daily Report Setting
+                  </button>
+                </span>
              {% else %}
                 <script>
                     window.location = '/SupremeApp/data/';
                 </script>
             {% endif %}
-            <span class="input-group-btn">
-                  <button type="submit" class="btn btn-primary btn-block btn-lg"
-                          onclick="window.location='/SupremeApp/';">{{ SITE_NAME }}
-                  </button>
-            </span>
             </div>
         </div>
     </div>

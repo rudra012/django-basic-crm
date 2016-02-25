@@ -36,6 +36,7 @@ INSTALLED_APPS = (
     'bootstrap3_datepicker',
     'datetimewidget',
     'floppyforms',
+    'cronjobs',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -54,6 +55,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'django.core.mail.backends.smtp.EmailBackend',
 )
 
 ROOT_URLCONF = 'Supreme.urls'
@@ -117,3 +119,13 @@ STATIC_ROOT = ''
 FORM_SESSION = {}  # {session_id : form object}
 
 DAB_FIELD_RENDERER = 'django_admin_bootstrapped.renderers.BootstrapFieldRenderer'
+
+EMAIL_HOST = 'smtp.gmail.com'
+
+EMAIL_HOST_USER = 'lintelservice001@gmail.com'
+
+EMAIL_HOST_PASSWORD = 'lintel001'
+
+EMAIL_PORT = 587
+
+EMAIL_USE_TLS = True

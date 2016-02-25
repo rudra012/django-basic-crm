@@ -1366,7 +1366,7 @@ def download(request):
         form = DownloadFileForm(request.POST)
         if not form.is_valid():
             settings.FORM_SESSION[session_id] = form
-            return render(request, 'churn_enq/search.html', locals())
+            return render(request, 'SupremeApp/download.html', locals())
         else:
             from_date = form.cleaned_data['from_date']
             to_date = form.cleaned_data['to_date']
@@ -1406,7 +1406,7 @@ def report_download(request):
         form = RDownloadFileForm(request.POST)
         if not form.is_valid():
             settings.FORM_SESSION[session_id] = form
-            return render(request, 'churn_enq/search.html', locals())
+            return render(request, 'SupremeApp/report_download.html', locals())
         else:
             from_date = form.cleaned_data['from_date']
             to_date = form.cleaned_data['to_date']

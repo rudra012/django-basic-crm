@@ -31,6 +31,11 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    'bootstrap_admin',
+    'bootstrapform',
+    'bootstrap3_datepicker',
+    'datetimewidget',
+    'floppyforms',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,10 +61,12 @@ ROOT_URLCONF = 'Supreme.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates'), ],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'SupremeApp.context_processors.global_context',
+                'django.core.context_processors.request',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -80,7 +87,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'supreme_new',
         'USER': 'root',
-        'PASSWORD': 'rudra',
+        'PASSWORD': 'lintel@365',
     }
 }
 
@@ -98,12 +105,15 @@ USE_L10N = True
 
 USE_TZ = False
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
-
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+STATIC_ROOT = ''
 # TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
 FORM_SESSION = {}  # {session_id : form object}
+
+DAB_FIELD_RENDERER = 'django_admin_bootstrapped.renderers.BootstrapFieldRenderer'

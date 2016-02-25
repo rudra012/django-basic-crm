@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.db import models
 from django.db.models import Q
 from django.forms import TextInput, Textarea
+from datetimewidget.widgets import DateTimeWidget
+
 from SupremeApp.models import SupremeModel, TCModel
 
 
@@ -28,6 +30,18 @@ class TCaddInline(admin.TabularInline):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    dateTimeOptions = {
+        'format': 'yyyy-mm-dd hh:ii:00',
+        'pickerPosition': 'top-right',
+        'minuteStep': 5,
+        'showMeridian': False,
+        'todayHighlight': True,
+        'autoclose': True
+    }
+    formfield_overrides = {
+        models.DateTimeField: {'widget': DateTimeWidget(options = dateTimeOptions,)},
+    }
+
 
 class TCreadInline(admin.TabularInline):
     model = TCModel
@@ -42,6 +56,7 @@ class TCreadInline(admin.TabularInline):
 
 
 class SupremeAdmin(admin.ModelAdmin):
+    # form = SupremeAdminForm
     inlines = [TCaddInline, TCreadInline]
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '25', 'width': '50%'})},
@@ -84,7 +99,7 @@ class SupremeAdmin(admin.ModelAdmin):
     list_display_links = ('cust_name',)
     ordering = ('processed', '-final_followup_date')
     list_filter = ('processed', 'bill_cycle', 'allocation_date')
-    save_on_top = True
+    # save_on_top = True
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -123,22 +138,24 @@ class SupremeAdmin(admin.ModelAdmin):
         # obj.calling_code = None
         # print type(form.data['tcmodel_set-0-followup_date_0'])
         # print type(form.data['tcmodel_set-0-followup_date_1'])
-        final_followup_date = form.data['tcmodel_set-0-followup_date_0'] + " " + \
-                              form.data['tcmodel_set-0-followup_date_1']
+        final_followup_date = form.data['tcmodel_set-0-followup_date']
         obj.attempt = int(obj.attempt) + 1
         obj.__setattr__('final_tc_name', str(request.user))
         obj.__setattr__('final_calling_remarks', form.data['tcmodel_set-0-calling_remarks'])
         obj.__setattr__('final_calling_code', form.data['tcmodel_set-0-calling_code'])
-        obj.final_followup_date = datetime.datetime.strptime(final_followup_date, '%Y-%m-%d %H:%M:%S')
+        if final_followup_date:
+            obj.final_followup_date = final_followup_date
         obj.final_calling_date = datetime.datetime.now()
         obj.final_tc_name = str(request.user)
         obj.processed = True
         obj.save()
 
     class Media:
-        css = {'all': (
-            settings.BASE_DIR + '/static/css/no-addanother-button.css',
-            settings.BASE_DIR + '/static/admin/css/forms.css')}
+        # css = {'all': (
+        #     settings.BASE_DIR + '/static/css/no-addanother-button.css',
+        #     settings.BASE_DIR + '/static/admin/css/forms.css'), }
+
+        js = ['/static/admin/js/test.js']
 
     def has_add_permission(self, request):
         return False

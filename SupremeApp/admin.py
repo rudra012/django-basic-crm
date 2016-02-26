@@ -8,6 +8,7 @@ from .models import *
 from django.db.models import Q
 from django.forms import TextInput, Textarea
 from datetimewidget.widgets import DateTimeWidget
+from django.contrib import messages
 
 from SupremeApp.models import SupremeModel, TCModel
 
@@ -222,6 +223,10 @@ class SettingAdmin(admin.ModelAdmin):
     list_display = ('title', 'active_days', 'time', 'no_of_backup_days')
     fields = ['title', 'days', 'time', 'no_of_backup_days']
     readonly_fields = ['title']
+
+    def save_model(self, request, obj, form, change):
+        messages.warning(request, 'Note:- These changes will apply from tomorrow onwords.')
+        super(SettingAdmin, self).save_model(request, obj, form, change)
 
     def active_days(self, instance):
         lst = []

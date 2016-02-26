@@ -215,14 +215,15 @@ class SupremeAdmin(admin.ModelAdmin):
 
 class SettingAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
-        return False
+        return not Setting.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
         return False
 
     list_display = ('title', 'active_days', 'time', 'no_of_backup_days')
     fields = ['title', 'days', 'time', 'no_of_backup_days']
-    readonly_fields = ['title']
+    if Setting.objects.exists():
+        readonly_fields = ['title']
 
     def save_model(self, request, obj, form, change):
         messages.warning(request, 'Note:- These changes will apply from tomorrow onwords.')

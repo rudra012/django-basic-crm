@@ -9,6 +9,7 @@
 
 </body>
 {% load i18n admin_static bootstrap %}
+{% load cycle from future %}
 
 {% block extrastyle %}{{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}"/>
@@ -91,6 +92,37 @@
                 </div>
             </form>
         {% endif %}
+        <div class="results table-responsive" style="clear: both;">
+            <table id="result_list" class="table table-striped">
+                  <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Sheet No</th>
+                            <th>Based On</th>
+                            <th>Speed</th>
+                            <th>No. of Records</th>
+                            <th>User</th>
+                            <th>Uploaded Date</th>
+                        </tr>
+                  </thead>
+                  <tbody>
+                    {% if results|length == 0 %}
+                            <tr><td colspan="7" style="text-align: center">No Upload history found.</td></tr>
+                    {% endif %}
+                    {% for result in results %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td>{{ result.file_name }}</td>
+                            <td>{{ result.sheet_no }}</td>
+                            <td>{{ result.based_on }}</td>
+                            <td>{{ result.speed }}</td>
+                            <td>{{ result.no_of_records }}</td>
+                            <td>{{ result.user }}</td>
+                            <td>{{ result.uploaded_date }}</td>
+                        </tr>
+                    {% endfor %}
+                  </tbody>
+            </table>
+        </div>
     </div>
 {% endblock %}
 

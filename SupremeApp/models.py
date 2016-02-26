@@ -209,7 +209,7 @@ class TCModel(models.Model):
 
 class Setting(models.Model):
 
-    title = models.CharField(max_length=50)
+    title = models.CharField(max_length=250)
     days_list = (('sun', 'Sunday'), ('mon', 'Monday'), ('tue', 'Tuesday'), ('wed', 'Wednesday'), ('thu', 'Thursday'),
                  ('fri', 'Friday'), ('sat', 'Saturday'))
     days = MultiSelectField(choices=days_list, max_length=50, blank=True, null=True)
@@ -221,3 +221,14 @@ class UserDetail(models.Model):
     name = models.CharField(max_length=50, default=None)
     email = models.EmailField()
     created_date = models.DateTimeField(default=datetime.datetime.now())
+
+
+class UploadFileHistory(models.Model):
+    upload_type = models.CharField(max_length=250, null=False, blank=False, choices=[("D",) * 2, ("P",) * 2])
+    file_name = models.CharField(max_length=250, null=False, blank=False, default='')
+    sheet_no = models.CharField(max_length=250, null=False, blank=False, default='0')
+    based_on = models.CharField(max_length=250, null=False, blank=False, default='0')
+    speed = models.CharField(max_length=250, null=False, blank=False, default='0')
+    no_of_records = models.CharField(max_length=250, null=False, blank=False, default='0')
+    uploaded_date = models.DateTimeField(default=datetime.datetime.now())
+    user = models.CharField(max_length=50, null=False, blank=False, default='')

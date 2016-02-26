@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from SupremeApp.form import UploadFileForm, DownloadFileForm, RDownloadFileForm
-from SupremeApp.models import SupremeModel, TCModel
+from SupremeApp.models import *
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.models import Count
@@ -46,7 +46,7 @@ def chunks(iterable, n):
         yield iterable[i:i + n]
 
 
-def upload_data_excel_file(ufile, sheet_no):
+def upload_data_excel_file(ufile, sheet_no, based_on, speed, user):
     print('reading file', ufile)
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
@@ -171,12 +171,22 @@ def upload_data_excel_file(ufile, sheet_no):
 
     if uploaded:
         msg.append("Following entries Uploaded: {}".format(', '.join(uploaded)))
+        u = UploadFileHistory()
+        u.file_name = ufile
+        u.sheet_no = sheet_no
+        u.based_on = based_on
+        u.speed = speed
+        u.upload_type = "D"
+        u.uploaded_date = datetime.datetime.now()
+        u.no_of_records = len(uploaded)
+        u.user = user
+        u.save()
     else:
         msg.append("No Entries uploaded")
     return msg
 
 
-def fast_upload_data_excel_file(ufile, sheet_no, speed):
+def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user):
     print('speed reading file', ufile, speed)
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
@@ -319,6 +329,16 @@ def fast_upload_data_excel_file(ufile, sheet_no, speed):
 
     if uploaded:
         msg.append("Following entries Uploaded: {}".format(', '.join(uploaded)))
+        u = UploadFileHistory()
+        u.file_name = ufile
+        u.sheet_no = sheet_no
+        u.based_on = based_on
+        u.speed = speed
+        u.upload_type = "D"
+        u.uploaded_date = datetime.datetime.now()
+        u.no_of_records = len(uploaded)
+        u.user = user
+        u.save()
     else:
         msg.append("No Entries uploaded")
 
@@ -346,19 +366,20 @@ def upload(request):
             speed = int(form.data['speed'])
             if ufile.name.endswith('.xls') or ufile.name.endswith('.xlsx'):
                 if based_on == "Normal Upload":
-                    msg = upload_data_excel_file(ufile, sheel_no)
+                    msg = upload_data_excel_file(ufile, sheel_no, based_on, speed, request.user)
                 else:
-                    msg = fast_upload_data_excel_file(ufile, sheel_no, speed)
+                    msg = fast_upload_data_excel_file(ufile, sheel_no, based_on, speed, request.user)
             else:
                 msg = [" .xls, .xlsx and .csv file formats are only supported."]
             messages = msg
         else:
             messages.append("Supply appropriate data.")
     form = UploadFileForm()
+    results = UploadFileHistory.objects.filter(upload_type='D').order_by('-uploaded_date').values()
     return render(request, 'SupremeApp/upload.html', locals())
 
 
-def upload_paid_excel_file(ufile, sheet_no):
+def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     print('reading paid file', ufile)
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
@@ -410,6 +431,16 @@ def upload_paid_excel_file(ufile, sheet_no):
 
     if uploaded:
         msg.append("Following entries Updated: {}".format(', '.join(uploaded)))
+        u = UploadFileHistory()
+        u.file_name = ufile
+        u.sheet_no = sheet_no
+        u.based_on = based_on
+        u.speed = speed
+        u.upload_type = "P"
+        u.uploaded_date = datetime.datetime.now()
+        u.no_of_records = len(uploaded)
+        u.user = user
+        u.save()
     else:
         msg.append("No Entries Updated")
 
@@ -428,7 +459,7 @@ def upload_paid_excel_file(ufile, sheet_no):
     return msg
 
 
-def fast_upload_paid_excel_file(ufile, sheet_no, speed):
+def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     print('fast reading paid file', ufile, speed)
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
@@ -495,6 +526,16 @@ def fast_upload_paid_excel_file(ufile, sheet_no, speed):
 
     if uploaded:
         msg.append("Following entries Updated: {}".format(', '.join(uploaded)))
+        u = UploadFileHistory()
+        u.file_name = ufile
+        u.sheet_no = sheet_no
+        u.based_on = based_on
+        u.speed = speed
+        u.upload_type = "P"
+        u.uploaded_date = datetime.datetime.now()
+        u.no_of_records = len(uploaded)
+        u.user = user
+        u.save()
     else:
         msg.append("No Entries Updated")
 
@@ -534,15 +575,16 @@ def paid_upload(request):
             speed = int(form.data['speed'])
             if ufile.name.endswith('.xls') or ufile.name.endswith('.xlsx'):
                 if based_on == "Normal Upload":
-                    msg = upload_paid_excel_file(ufile, sheel_no)
+                    msg = upload_paid_excel_file(ufile, sheel_no, based_on, speed, request.user)
                 else:
-                    msg = fast_upload_paid_excel_file(ufile, sheel_no, speed)
+                    msg = fast_upload_paid_excel_file(ufile, sheel_no, based_on, speed, request.user)
             else:
                 msg = [" .xls, .xlsx and .csv file formats are only supported."]
             messages = msg
         else:
             messages.append("Supply appropriate data.")
     form = UploadFileForm()
+    results = UploadFileHistory.objects.filter(upload_type='P').order_by('-uploaded_date').values()
     return render(request, 'SupremeApp/paid_upload.html', locals())
 
 

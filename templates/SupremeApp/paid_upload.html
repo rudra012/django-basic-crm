@@ -26,7 +26,7 @@
         <li>
             <a href="/SupremeApp/" title="SupremeApp">{% if SITE_NAME %}{{ SITE_NAME }}{% endif %}</a>
         </li>
-        <li class="active">Data File Upload</li>
+        <li class="active">Paid File Upload</li>
     </ol>
 {% endblock %}
 
@@ -71,7 +71,7 @@
 
                                 <script type="text/javascript">
                                     $(document).ready(function () {
-                                        $("#id_sheet_no").change(function () {
+                                        $("#id_speed").change(function () {
                                             $('#id_sheet_no_text').val(this.value);
                                         });
                                     });
@@ -92,6 +92,37 @@
                 </div>
             </form>
         {% endif %}
+        <div class="results table-responsive" style="clear: both;">
+            <table id="result_list" class="table table-striped">
+                  <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Sheet No</th>
+                            <th>Based On</th>
+                            <th>Speed</th>
+                            <th>No. of Records</th>
+                            <th>User</th>
+                            <th>Uploaded Date</th>
+                        </tr>
+                  </thead>
+                  <tbody>
+                    {% if results|length == 0 %}
+                            <tr><td colspan="7" style="text-align: center">No Upload history found.</td></tr>
+                    {% endif %}
+                    {% for result in results %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td>{{ result.file_name }}</td>
+                            <td>{{ result.sheet_no }}</td>
+                            <td>{{ result.based_on }}</td>
+                            <td>{{ result.speed }}</td>
+                            <td>{{ result.no_of_records }}</td>
+                            <td>{{ result.user }}</td>
+                            <td>{{ result.uploaded_date }}</td>
+                        </tr>
+                    {% endfor %}
+                  </tbody>
+            </table>
+        </div>
     </div>
 {% endblock %}
 

@@ -229,6 +229,7 @@ class UploadFileHistory(models.Model):
     sheet_no = models.CharField(max_length=250, null=False, blank=False, default='0')
     based_on = models.CharField(max_length=250, null=False, blank=False, default='0')
     speed = models.CharField(max_length=250, null=False, blank=False, default='0')
-    no_of_records = models.CharField(max_length=250, null=False, blank=False, default='0')
+    generate_new_report_list = ((True, 'Yes'), (False, 'No'))
+    generate_new_report = models.BooleanField(null=False, blank=False, default=True, choices=generate_new_report_list, verbose_name="Generate Report?")
     uploaded_date = models.DateTimeField(default=datetime.datetime.now())
     user = models.CharField(max_length=50, null=False, blank=False, default='')

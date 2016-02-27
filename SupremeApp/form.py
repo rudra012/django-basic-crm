@@ -20,6 +20,8 @@ class UploadFileForm(forms.Form):
     sheet_no = forms.IntegerField(min_value=1, initial=1)
     based_on = forms.ChoiceField(choices=[('Fast Upload',) * 2,
                                           ('Normal Upload',) * 2])
+    generate_new_report_list = ((True, 'Yes'), (False, 'No'))
+    generate_report = forms.ChoiceField(choices=generate_new_report_list)
     speed = forms.IntegerField(min_value=10, max_value=1000, initial=100, widget=Slider)
 
 

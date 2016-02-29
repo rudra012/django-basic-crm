@@ -96,11 +96,11 @@
             <table id="result_list" class="table table-striped">
                   <thead>
                         <tr>
+                            <th>Generate Report?</th>
                             <th>File Name</th>
                             <th>Sheet No</th>
                             <th>Based On</th>
                             <th>Speed</th>
-                            <th>No. of Records</th>
                             <th>User</th>
                             <th>Uploaded Date</th>
                         </tr>
@@ -111,11 +111,17 @@
                     {% endif %}
                     {% for result in results %}
                         <tr class="{% cycle 'row1' 'row2' %}">
+                            <td>
+                                {% if result.generate_new_report %}
+                                    <img src="/static/admin/img/icon-yes.gif" alt="True">
+                                {% else %}
+                                    <img src="/static/admin/img/icon-no.gif" alt="False">
+                                {% endif %}
+                            </td>
                             <td>{{ result.file_name }}</td>
                             <td>{{ result.sheet_no }}</td>
                             <td>{{ result.based_on }}</td>
                             <td>{{ result.speed }}</td>
-                            <td>{{ result.no_of_records }}</td>
                             <td>{{ result.user }}</td>
                             <td>{{ result.uploaded_date }}</td>
                         </tr>

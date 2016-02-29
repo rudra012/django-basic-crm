@@ -25,6 +25,14 @@ class UploadFileForm(forms.Form):
     speed = forms.IntegerField(min_value=10, max_value=1000, initial=100, widget=Slider)
 
 
+class PaidUploadFileForm(forms.Form):
+    file = forms.FileField()
+    sheet_no = forms.IntegerField(min_value=1, initial=1)
+    based_on = forms.ChoiceField(choices=[('Fast Upload',) * 2,
+                                          ('Normal Upload',) * 2])
+    speed = forms.IntegerField(min_value=10, max_value=1000, initial=100, widget=Slider)
+
+
 class DownloadFileForm(forms.Form):
     from_date = forms.DateField(required=True, widget=DatePickerInput(format="%Y-%m-%d"), initial=datetime.date.today())
     to_date = forms.DateField(required=True,widget=DatePickerInput(format="%Y-%m-%d"), initial=datetime.date.today())

@@ -1,4 +1,5 @@
 $(function(){
+    // $("#tcmodel_set-group").prependTo(".affix");
     $("#tcmodel_set-group table th")[1].style.display = 'none'
     $(".field-followup_date")[0].style.display = 'none'
     temp = $("#tcmodel_set-0-followup_date").val();

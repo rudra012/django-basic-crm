@@ -214,7 +214,6 @@ class Setting(models.Model):
                  ('fri', 'Friday'), ('sat', 'Saturday'))
     days = MultiSelectField(choices=days_list, max_length=50, blank=True, null=True)
     time = models.TimeField(default=datetime.datetime.now().time())
-    no_of_backup_days = models.DecimalField(default=1, max_digits=1, decimal_places=0, verbose_name="No. of days")
 
 
 class UserDetail(models.Model):

@@ -225,8 +225,8 @@ class SettingAdmin(admin.ModelAdmin):
         del actions['delete_selected']
         return actions
     # admin.site.disable_action('delete_selected')
-    list_display = ('title', 'active_days', 'time', 'no_of_backup_days')
-    fields = ['title', 'days', 'time', 'no_of_backup_days']
+    list_display = ('title', 'active_days', 'time')
+    fields = ['title', 'days', 'time']
     if Setting.objects.exists():
         readonly_fields = ['title']
 

@@ -9,7 +9,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from SupremeApp.form import UploadFileForm, DownloadFileForm, RDownloadFileForm
+from SupremeApp.form import *
 from SupremeApp.models import *
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -583,7 +583,7 @@ def paid_upload(request):
             messages = msg
         else:
             messages.append("Supply appropriate data.")
-    form = UploadFileForm()
+    form = PaidUploadFileForm()
     results = UploadFileHistory.objects.filter(upload_type='P').order_by('-uploaded_date').values()
     return render(request, 'SupremeApp/paid_upload.html', locals())
 

@@ -21,12 +21,13 @@ def run_backup_mail_cron():
             def send_backup():
                 # date_1 = datetime.datetime.strptime(datetime.datetime.strftime(datetime.datetime.now(), '%m/%d/%y'), "%m/%d/%y")
                 # from_date = datetime.datetime.strftime(date_1 - datetime.timedelta(days=int(st.no_of_backup_days)), '%Y-%m-%d 00:00:00')
-                upload_history = UploadFileHistory().objects.filter(upload_type="D", generate_new_report=True).order_by("-uploaded_date")
+                upload_history = UploadFileHistory.objects.filter(upload_type="D", generate_new_report=True).order_by("-uploaded_date")
+                print upload_history
                 if upload_history:
-                    from_date = upload_history[0].uploaded_date
+                    from_date = datetime.datetime.strftime(upload_history[0].uploaded_date, '%Y-%m-%d %H:%M:%S')
                     to_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d 23:59:59')
 
-                    file_name = 'SUPREME_DATA_from_%s_to_%s.xlsx' %(datetime.datetime.strftime(from_date, '%d-%m-%Y'), datetime.datetime.strftime(datetime.datetime.now(), '%d-%m-%Y'))
+                    file_name = 'SUPREME_DATA_from_%s_to_%s.xlsx' %(datetime.datetime.strftime(upload_history[0].uploaded_date, '%d-%m-%Y'), datetime.datetime.strftime(datetime.datetime.now(), '%d-%m-%Y'))
 
                     sender_list = []
                     subject = 'Daily Report File'
@@ -39,7 +40,7 @@ def run_backup_mail_cron():
                     mail = EmailMessage(subject, msg, from_email, sender_list)
 
                     # Attach Reoprt
-                    print st.no_of_backup_days
+                    # print st.no_of_backup_days
                     print from_date, to_date
 
                     supreme_app_data = get_supreme_app_data(from_date, to_date, based_on="Last Modified")

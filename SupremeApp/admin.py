@@ -227,8 +227,11 @@ class SettingAdmin(admin.ModelAdmin):
     # admin.site.disable_action('delete_selected')
     list_display = ('title', 'active_days', 'time')
     fields = ['title', 'days', 'time']
-    if Setting.objects.exists():
-        readonly_fields = ['title']
+    try:
+        if Setting.objects.exists():
+            readonly_fields = ['title']
+    except Exception as exx:
+        print "ignore"
 
     def save_model(self, request, obj, form, change):
         messages.warning(request, 'Note:- These changes will apply from tomorrow onwords.')

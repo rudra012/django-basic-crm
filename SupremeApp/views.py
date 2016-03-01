@@ -766,8 +766,8 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for cdata in cluster_data:
         cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
         if cdata['cluster'] in cluster_paid_data_dict:
-            cluster_list.append(cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
-            cluster_list.append(cluster_paid_data_dict[cdata['cluster']]['res_val'])
+            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_cnt'] is None else cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
+            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_val'] is None else cluster_paid_data_dict[cdata['cluster']]['res_val'])
             cluster_list.append(float(cluster_list[3] / cluster_list[1]))
             cluster_list.append(float(cluster_list[4] / cluster_list[2]))
         else:
@@ -835,8 +835,8 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for tdata in tc_data:
         tc_list = [tdata['final_tc_name'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['final_tc_name'] in tc_paid_data_dict:
-            tc_list.append(tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'])
-            tc_list.append(tc_paid_data_dict[tdata['final_tc_name']]['res_val'])
+            tc_list.append(0 if tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'] is None else tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'])
+            tc_list.append(0 if tc_paid_data_dict[tdata['final_tc_name']]['res_val'] is None else tc_paid_data_dict[tdata['final_tc_name']]['res_val'])
             tc_list.append(float(tc_list[3] / tc_list[1]))
             tc_list.append(float(tc_list[4] / tc_list[2]))
         else:
@@ -903,8 +903,8 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for tdata in product_data:
         product_list = [tdata['service_subtype'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['service_subtype'] in product_paid_data_dict:
-            product_list.append(product_paid_data_dict[tdata['service_subtype']]['res_cnt'])
-            product_list.append(product_paid_data_dict[tdata['service_subtype']]['res_val'])
+            product_list.append(0 if product_paid_data_dict[tdata['service_subtype']]['res_cnt'] is None else product_paid_data_dict[tdata['service_subtype']]['res_cnt'])
+            product_list.append(0 if product_paid_data_dict[tdata['service_subtype']]['res_val'] is None else product_paid_data_dict[tdata['service_subtype']]['res_val'])
             product_list.append(float(product_list[3] / product_list[1]))
             product_list.append(float(product_list[4] / product_list[2]))
         else:
@@ -1075,8 +1075,8 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for cdata in cluster_data:
         cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
         if cdata['cluster'] in cluster_paid_data_dict:
-            cluster_list.append(cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
-            cluster_list.append(cluster_paid_data_dict[cdata['cluster']]['res_val'])
+            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_cnt'] is None else cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
+            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_val'] is None else cluster_paid_data_dict[cdata['cluster']]['res_val'])
             cluster_list.append(float(cluster_list[3] / cluster_list[1]))
             cluster_list.append(float(cluster_list[4] / cluster_list[2]))
         else:
@@ -1123,8 +1123,8 @@ def create_temp_xlsx_report_file(supreme_app_data):
     cluster_list = ['Totals']
     cluster_list.append(total_cluster_data['alloc_cnt'])
     cluster_list.append(total_cluster_data['alloc_val'])
-    cluster_list.append(total_cluster_paid_data['res_cnt'])
-    cluster_list.append(total_cluster_paid_data['res_val'])
+    cluster_list.append(0 if total_cluster_paid_data['res_cnt'] is None else total_cluster_paid_data['res_cnt'])
+    cluster_list.append(0 if total_cluster_paid_data['res_val'] is None else total_cluster_paid_data['res_val'])
     cluster_list.append(float(cluster_list[3] / cluster_list[1]))
     cluster_list.append(float(cluster_list[4] / cluster_list[2]))
 
@@ -1166,8 +1166,8 @@ def create_temp_xlsx_report_file(supreme_app_data):
     # *****************         User Wise Data         *****************
     users = User.objects.all()
     for user in users:
-        caption = str(user) + " Report"
-        sheet.write('C' + str(nlast_raw + 2), caption, bold)
+        # caption = str(user) + " Report"
+        # sheet.write('C' + str(nlast_raw + 2), caption, bold)
 
         column_list = [
             {'header': ' ',
@@ -1317,82 +1317,86 @@ def create_temp_xlsx_report_file(supreme_app_data):
             total_Others = user_supreme_app_data.filter(final_calling_code='Others').count()
             Others.append(total_Others)
 
-        # Total Column
-        column_list.append({'header': 'Totals',
-                        'formula': '=SUM(Table7[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
-                        'total_function': 'sum',
-                        })
+        if call_days:
+            caption = str(user) + " Report"
+            sheet.write('C' + str(nlast_raw + 2), caption, bold)
 
-        user_wise_trend_data.append(DISPO_LIST)
-        user_wise_trend_data.append(CB)
-        user_wise_trend_data.append(RR)
-        user_wise_trend_data.append(OS)
-        user_wise_trend_data.append(SO)
-        user_wise_trend_data.append(CLMPD)
-        user_wise_trend_data.append(WPD)
-        user_wise_trend_data.append(PAID)
-        user_wise_trend_data.append(PARTPAID)
-        user_wise_trend_data.append(BD)
-        user_wise_trend_data.append(BNR)
-        user_wise_trend_data.append(NR)
-        user_wise_trend_data.append(RTP)
-        user_wise_trend_data.append(PTP)
-        user_wise_trend_data.append(CANCELLATION)
-        user_wise_trend_data.append(SALES_ISSUE)
-        user_wise_trend_data.append(WAIVERS)
-        user_wise_trend_data.append(Others)
-        user_wise_trend_data.append(no_call_list)
-        user_wise_trend_data.append(repeat)
-        user_wise_trend_data.append(fresh)
-        user_wise_trend_data.append(contact)
-        user_wise_trend_data.append(no_contact)
+            # Total Column
+            column_list.append({'header': 'Totals',
+                            'formula': '=SUM(Table7[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
+                            'total_function': 'sum',
+                            })
 
-        print column_list
-        options = {
-            'data': user_wise_trend_data,
-            'style': 'Table Style Medium 10',
-            'total_row': False,
-            # 'autofilter': False,
-            'banded_rows': False, 'banded_columns': True,
-            'first_column': True, 'last_column': False,
-            # 'name': 'Cluster wise Performance',
-            'columns': column_list
-        }
+            user_wise_trend_data.append(DISPO_LIST)
+            user_wise_trend_data.append(CB)
+            user_wise_trend_data.append(RR)
+            user_wise_trend_data.append(OS)
+            user_wise_trend_data.append(SO)
+            user_wise_trend_data.append(CLMPD)
+            user_wise_trend_data.append(WPD)
+            user_wise_trend_data.append(PAID)
+            user_wise_trend_data.append(PARTPAID)
+            user_wise_trend_data.append(BD)
+            user_wise_trend_data.append(BNR)
+            user_wise_trend_data.append(NR)
+            user_wise_trend_data.append(RTP)
+            user_wise_trend_data.append(PTP)
+            user_wise_trend_data.append(CANCELLATION)
+            user_wise_trend_data.append(SALES_ISSUE)
+            user_wise_trend_data.append(WAIVERS)
+            user_wise_trend_data.append(Others)
+            user_wise_trend_data.append(no_call_list)
+            user_wise_trend_data.append(repeat)
+            user_wise_trend_data.append(fresh)
+            user_wise_trend_data.append(contact)
+            user_wise_trend_data.append(no_contact)
 
-        last_raw = nlast_raw + len(user_wise_trend_data) + 2
-        sheet.add_table(nlast_raw + 3, 0, last_raw, len(column_list) - 1, options)
+            print column_list
+            options = {
+                'data': user_wise_trend_data,
+                'style': 'Table Style Medium 10',
+                'total_row': False,
+                # 'autofilter': False,
+                'banded_rows': False, 'banded_columns': True,
+                'first_column': True, 'last_column': False,
+                # 'name': 'Cluster wise Performance',
+                'columns': column_list
+            }
 
-        nlast_raw = last_raw
+            last_raw = nlast_raw + len(user_wise_trend_data) + 2
+            sheet.add_table(nlast_raw + 3, 0, last_raw, len(column_list) - 1, options)
 
-        column_list1.append({'header': 'Avg',
-                        'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
-                        'total_function': 'average',
-                        'format': percent_format,
-                        })
+            nlast_raw = last_raw
+        if call_days:
+            column_list1.append({'header': 'Avg',
+                            'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
+                            'total_function': 'average',
+                            'format': percent_format,
+                            })
 
-        user_wise_trend_data = []
-        user_wise_trend_data.append(repeat_percent)
-        user_wise_trend_data.append(fresh_percent)
-        user_wise_trend_data.append(contact_percent)
-        user_wise_trend_data.append(no_contact_percent)
+            user_wise_trend_data = []
+            user_wise_trend_data.append(repeat_percent)
+            user_wise_trend_data.append(fresh_percent)
+            user_wise_trend_data.append(contact_percent)
+            user_wise_trend_data.append(no_contact_percent)
 
-        options = {
-            'data': user_wise_trend_data,
-            'style': 'Table Style Medium 10',
-            'total_row': 0,
-            # 'autofilter': False,
-            'banded_rows': False, 'banded_columns': True,
-            'first_column': True, 'last_column': False,
-            # 'name': 'Cluster wise Performance',
-            'columns': column_list1,
-            'header_row': False
+            options = {
+                'data': user_wise_trend_data,
+                'style': 'Table Style Medium 10',
+                'total_row': 0,
+                # 'autofilter': False,
+                'banded_rows': False, 'banded_columns': True,
+                'first_column': True, 'last_column': False,
+                # 'name': 'Cluster wise Performance',
+                'columns': column_list1,
+                'header_row': False
 
-        }
+            }
 
-        last_raw = nlast_raw + len(user_wise_trend_data) + 2
-        sheet.add_table(nlast_raw + 1, 0, last_raw, len(column_list1) - 1, options)
+            last_raw = nlast_raw + len(user_wise_trend_data) + 2
+            sheet.add_table(nlast_raw + 1, 0, last_raw, len(column_list1) - 1, options)
 
-        nlast_raw = last_raw
+            nlast_raw = last_raw
 
     book.close()
     return file_path

@@ -10,8 +10,9 @@ from django.forms import TextInput, Textarea
 from datetimewidget.widgets import DateTimeWidget
 from django.contrib import messages
 
+from django.contrib.auth.models import User
 from SupremeApp.models import SupremeModel, TCModel
-
+from valuerangefilter import ValueRangeFilter
 
 class TCaddInline(admin.TabularInline):
     model = TCModel
@@ -94,15 +95,26 @@ class SupremeAdmin(admin.ModelAdmin):
         'bill_delivery_mode',
         'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
     )
+
     list_display = (
-        'processed', 'cust_name', 'caf_num', 'mdn_no', 'final_tc_name', 'status', 'pending_amt', 'account_balance',
+        'processed', 'cust_name', 'caf_num', 'mdn_no', 'status', 'pending_amt', 'account_balance',
         'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
     )
+
+    def get_list_display(self, request):
+        if request.user.is_superuser:
+            return self.list_display + ('final_tc_name', )
+        else:
+            return self.list_display
+
     search_fields = ('mdn_no', 'cust_name',)
     date_hierarchy = 'date_created'
     list_display_links = ('cust_name',)
     ordering = ('processed', '-final_followup_date')
-    list_filter = ('processed', 'bill_cycle', 'allocation_date')
+
+    list_filter = ['processed', 'bill_cycle', ('pending_amt', ValueRangeFilter), 'allocation_date',
+                   ('account_balance', ValueRangeFilter), 'status']
+
     # save_on_top = True
 
     def save_formset(self, request, form, formset, change):
@@ -167,8 +179,17 @@ class SupremeAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
 
+    def get_actions(self, request):
+        actions = super(SupremeAdmin, self).get_actions(request)
+        if not request.user.is_superuser:
+            del actions['delete_selected']
+        return actions
+
     def get_list_filter(self, request):
-        return self.list_filter if request.user.is_superuser else ()
+        if request.user.is_superuser:
+            return self.list_filter + ['final_tc_name', ]
+        else:
+            return self.list_filter
 
     def get_queryset(self, request):
         qs = super(SupremeAdmin, self).get_queryset(request)
@@ -215,7 +236,10 @@ class SupremeAdmin(admin.ModelAdmin):
 
 class SettingAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
-        return not Setting.objects.exists()
+        if request.user.is_superuser:
+            return not Setting.objects.exists()
+        else:
+            return False
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -227,11 +251,18 @@ class SettingAdmin(admin.ModelAdmin):
     # admin.site.disable_action('delete_selected')
     list_display = ('title', 'active_days', 'time')
     fields = ['title', 'days', 'time']
-    try:
+
+    def get_readonly_fields(self, request, obj=None):
         if Setting.objects.exists():
-            readonly_fields = ['title']
-    except Exception as exx:
-        print "ignore"
+            return ['title']
+        else:
+            return []
+
+    # try:
+    #     if Setting.objects.exists():
+    #         readonly_fields = ['title']
+    # except Exception as exx:
+    #     print "Ignore"
 
     def save_model(self, request, obj, form, change):
         messages.warning(request, 'Note:- These changes will apply from tomorrow onwords.')

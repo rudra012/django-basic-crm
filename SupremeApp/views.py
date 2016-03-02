@@ -46,7 +46,7 @@ def chunks(iterable, n):
         yield iterable[i:i + n]
 
 
-def upload_data_excel_file(ufile, sheet_no, based_on, speed, user):
+def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_report):
     print('reading file', ufile)
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
@@ -180,13 +180,17 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user):
         u.uploaded_date = datetime.datetime.now()
         u.no_of_records = len(uploaded)
         u.user = user
+        if str(generate_report) == "True":
+            u.generate_new_report = True
+        else:
+            u.generate_new_report = False
         u.save()
     else:
         msg.append("No Entries uploaded")
     return msg
 
 
-def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user):
+def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_report):
     print('speed reading file', ufile, speed)
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
@@ -338,6 +342,10 @@ def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user):
         u.uploaded_date = datetime.datetime.now()
         u.no_of_records = len(uploaded)
         u.user = user
+        if str(generate_report) == "True":
+            u.generate_new_report = True
+        else:
+            u.generate_new_report = False
         u.save()
     else:
         msg.append("No Entries uploaded")
@@ -364,11 +372,12 @@ def upload(request):
             sheel_no = int(form.data['sheet_no'])
             based_on = form.data['based_on']
             speed = int(form.data['speed'])
+            generate_report = form.data['generate_report']
             if ufile.name.endswith('.xls') or ufile.name.endswith('.xlsx'):
                 if based_on == "Normal Upload":
-                    msg = upload_data_excel_file(ufile, sheel_no, based_on, speed, request.user)
+                    msg = upload_data_excel_file(ufile, sheel_no, based_on, speed, request.user, generate_report)
                 else:
-                    msg = fast_upload_data_excel_file(ufile, sheel_no, based_on, speed, request.user)
+                    msg = fast_upload_data_excel_file(ufile, sheel_no, based_on, speed, request.user, generate_report)
             else:
                 msg = [" .xls, .xlsx and .csv file formats are only supported."]
             messages = msg
@@ -382,7 +391,7 @@ def upload(request):
 def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     print('reading paid file', ufile)
     wb = xlrd.open_workbook(file_contents=ufile.read())
-    print wb.nsheets
+    # print wb.nsheets
     if sheet_no not in range(1, wb.nsheets + 1):
         return ["Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)]
 
@@ -393,7 +402,7 @@ def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     error_caf_no = []
     try:
         for i in range(1, sheet.nrows):
-            print(i)
+            # print(i)
 
             # for col in range(sheet.ncols):
             #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col).value), sheet.name)
@@ -462,7 +471,7 @@ def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
 def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     print('fast reading paid file', ufile, speed)
     wb = xlrd.open_workbook(file_contents=ufile.read())
-    print wb.nsheets
+    # print wb.nsheets
     if sheet_no not in range(1, wb.nsheets + 1):
         return ["Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)]
 
@@ -474,7 +483,7 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     error_caf_no_range = []
     try:
         for range_list in chunks(range(1, sheet.nrows), speed):
-            print(range_list)
+            # print(range_list)
             # for col in range(sheet.ncols):
             #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
             model_list = []
@@ -1484,8 +1493,20 @@ def report_download(request):
 
 @login_required
 def index(request):
-    print "INDEX REQ", request
-    return render(request, 'SupremeApp/index.html', locals())
+    if request.user.is_superuser:
+        print "INDEX REQ", request
+        return render(request, 'SupremeApp/index.html', locals())
+    else:
+        return HttpResponseRedirect("/SupremeApp/data/")
+
+
+@login_required
+def mainindex(request):
+    if request.user.is_superuser:
+        return render(request, 'index.html', locals())
+    else:
+        print "123"
+        return HttpResponseRedirect("/SupremeApp/data/")
 
 
 @login_required

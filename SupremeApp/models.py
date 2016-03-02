@@ -3,7 +3,6 @@ from bulk_update.manager import BulkUpdateManager
 from multiselectfield import MultiSelectField
 import datetime
 
-
 class SupremeModel(models.Model):
     # Import Data
     caf_num = models.CharField(max_length=30, null=True, verbose_name="A/C No")
@@ -20,7 +19,15 @@ class SupremeModel(models.Model):
     phongen_status = models.CharField(max_length=30, null=True)
     desired_service = models.CharField(max_length=30, null=True)
     og_bar = models.CharField(max_length=30, null=True)
-    account_balance = models.CharField(max_length=30, null=True, verbose_name="O/S Amt")
+    account_balance = models.DecimalField(max_digits=65, null=True, decimal_places=2, verbose_name="O/S Amt")
+    account_balance.lookup_range = (
+        (None, 'All'),
+        ([0, 100], '0-100'),
+        ([100, 300], '100-300'),
+        ([300, 1000], '300-1000'),
+        ([1000, 10000], '1000-10000'),
+        ([10000, None], '10000+'),
+    )
     pending_amount = models.CharField(max_length=30, null=True)
     debtors_age = models.CharField(max_length=20, null=True)
     voluntary_deposit = models.CharField(max_length=30, null=True)
@@ -101,7 +108,15 @@ class SupremeModel(models.Model):
     allocation_date = models.DateField(null=True)
     closing_date = models.DateField(null=True)
     address = models.CharField(max_length=300, null=True)
-    pending_amt = models.CharField(max_length=30, null=True, verbose_name='Pending Amount')
+    pending_amt = models.DecimalField(max_digits=65, null=True, decimal_places=2, verbose_name='Pending Amount')
+    pending_amt.lookup_range = (
+        (None, 'All'),
+        ([0, 100], '0-100'),
+        ([100, 300], '100-300'),
+        ([300, 1000], '300-1000'),
+        ([1000, 10000], '1000-10000'),
+        ([10000, None], '10000+'),
+    )
 
     # tc_name = models.CharField(max_length=50, null=True)
     # calling_date = models.DateTimeField(null=True, verbose_name="Calling Date")
@@ -180,6 +195,10 @@ class SupremeModel(models.Model):
     # def __repr__(self):
     #     return "--".join([str(self.attempt), str(self.final_followup_date), self.cust_name])
 
+    class Meta:
+        verbose_name = 'Supreme Data'
+        verbose_name_plural = 'Supreme Data'
+
 
 class TCModel(models.Model):
     tc_name = models.CharField(max_length=50, null=True)
@@ -206,6 +225,10 @@ class TCModel(models.Model):
     calling_date = models.DateTimeField(null=True, verbose_name="Calling Date")
     superme_key = models.ForeignKey(SupremeModel, on_delete=models.CASCADE)
 
+    class Meta:
+        verbose_name = 'TC Data'
+        verbose_name_plural = 'TC Data'
+
 
 class Setting(models.Model):
 
@@ -215,11 +238,19 @@ class Setting(models.Model):
     days = MultiSelectField(choices=days_list, max_length=50, blank=True, null=True)
     time = models.TimeField(default=datetime.datetime.now().time())
 
+    class Meta:
+        verbose_name = 'Daily Report Setting'
+        verbose_name_plural = 'Daily Report Setting'
+
 
 class UserDetail(models.Model):
     name = models.CharField(max_length=50, default=None)
     email = models.EmailField()
     created_date = models.DateTimeField(default=datetime.datetime.now())
+
+    class Meta:
+        verbose_name = 'Backup Email List'
+        verbose_name_plural = 'Backup Email List'
 
 
 class UploadFileHistory(models.Model):
@@ -228,7 +259,6 @@ class UploadFileHistory(models.Model):
     sheet_no = models.CharField(max_length=250, null=False, blank=False, default='0')
     based_on = models.CharField(max_length=250, null=False, blank=False, default='0')
     speed = models.CharField(max_length=250, null=False, blank=False, default='0')
-    generate_new_report_list = ((True, 'Yes'), (False, 'No'))
-    generate_new_report = models.BooleanField(null=False, blank=False, default=True, choices=generate_new_report_list, verbose_name="Generate Report?")
+    generate_new_report = models.BooleanField(null=False, blank=False, default=False, verbose_name="Generate Report?")
     uploaded_date = models.DateTimeField(default=datetime.datetime.now())
     user = models.CharField(max_length=50, null=False, blank=False, default='')

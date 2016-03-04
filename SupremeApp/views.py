@@ -1,19 +1,22 @@
-import datetime, time
 import os
+import time
 import traceback
+from decimal import Decimal
 import xlrd
 import xlsxwriter
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db.models import Q
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+
 from SupremeApp.form import *
 from SupremeApp.models import *
-from django.contrib.auth.models import User
-from django.db.models import Q
-from django.db.models import Count
+
 
 def try_to_int(idata):
     try:
@@ -51,7 +54,7 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
     if sheet_no not in range(1, wb.nsheets + 1):
-        return ["Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)]
+        return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
 
     sheet = wb.sheet_by_index(sheet_no - 1)
     msg = []
@@ -81,6 +84,7 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
                     desired_service=sheet.cell(i, 12).value,
                     og_bar=sheet.cell(i, 13).value,
                     account_balance=sheet.cell(i, 14).value,
+                    pending_amt=sheet.cell(i, 14).value,
                     debtors_age=sheet.cell(i, 15).value,
                     voluntary_deposit=sheet.cell(i, 16).value,
                     unbilled_ild=sheet.cell(i, 17).value,
@@ -167,10 +171,10 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
                 print traceback.format_exc()
     except Exception, e:
         print traceback.format_exc()
-        return ["System Error: " + str(e)]
+        return [{"error": "System Error: " + str(e)}]
 
     if uploaded:
-        msg.append("Following entries Uploaded: {}".format(', '.join(uploaded)))
+        msg.append({"success": "Following entries Uploaded: {}".format(', '.join(uploaded))})
         u = UploadFileHistory()
         u.file_name = ufile
         u.sheet_no = sheet_no
@@ -186,7 +190,7 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
             u.generate_new_report = False
         u.save()
     else:
-        msg.append("No Entries uploaded")
+        msg.append({"warning": "No Entries uploaded"})
     return msg
 
 
@@ -195,7 +199,7 @@ def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate
     wb = xlrd.open_workbook(file_contents=ufile.read())
     print wb.nsheets
     if sheet_no not in range(1, wb.nsheets + 1):
-        return ["Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)]
+        return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
 
     sheet = wb.sheet_by_index(sheet_no - 1)
     msg = []
@@ -329,10 +333,10 @@ def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate
             SupremeModel.objects.bulk_create(model_list)
     except Exception, e:
         print traceback.format_exc()
-        return ["System Error: " + str(e)]
+        return [{"error": "System Error: " + str(e)}]
 
     if uploaded:
-        msg.append("Following entries Uploaded: {}".format(', '.join(uploaded)))
+        msg.append({"success": "Following entries Uploaded: {}".format(', '.join(uploaded))})
         u = UploadFileHistory()
         u.file_name = ufile
         u.sheet_no = sheet_no
@@ -348,13 +352,13 @@ def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate
             u.generate_new_report = False
         u.save()
     else:
-        msg.append("No Entries uploaded")
+        msg.append({"warning": "No Entries uploaded"})
 
     if error_mobile_no:
-        msg.append("Some problem in mobile numbers: {}".format(','.join(error_mobile_no)))
+        msg.append({"error": "Some problem in mobile numbers: {}".format(','.join(error_mobile_no))})
 
     if error_mobile_no_range:
-        msg.append("Some problem in mobile range: {}".format(','.join(error_mobile_no_range)))
+        msg.append({"error": "Some problem in mobile range: {}".format(','.join(error_mobile_no_range))})
 
     return msg
 
@@ -363,7 +367,7 @@ def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate
 def upload(request):
     session_id = request.META['HTTP_COOKIE'].split()[1].split('=')[1]
     print session_id, "UPLOAD REQ"
-    messages = []
+    message_list = []
     print 'rm', request.method
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -379,10 +383,20 @@ def upload(request):
                 else:
                     msg = fast_upload_data_excel_file(ufile, sheel_no, based_on, speed, request.user, generate_report)
             else:
-                msg = [" .xls, .xlsx and .csv file formats are only supported."]
-            messages = msg
+                msg = [{"error": " .xls, .xlsx and .csv file formats are only supported."}]
+            message_list = msg
         else:
-            messages.append("Supply appropriate data.")
+            message_list.append({"error": "Supply appropriate data."})
+    for msg in message_list:
+        for k, v in msg.iteritems():
+            if k == "warning":
+                messages.warning(request, v)
+            elif k == "error":
+                print v
+                messages.error(request, v)
+            elif k == "success":
+                messages.success(request, v)
+
     form = UploadFileForm()
     results = UploadFileHistory.objects.filter(upload_type='D').order_by('-uploaded_date').values()
     return render(request, 'SupremeApp/upload.html', locals())
@@ -393,7 +407,7 @@ def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     wb = xlrd.open_workbook(file_contents=ufile.read())
     # print wb.nsheets
     if sheet_no not in range(1, wb.nsheets + 1):
-        return ["Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)]
+        return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
 
     sheet = wb.sheet_by_index(sheet_no - 1)
     msg = []
@@ -436,10 +450,10 @@ def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
                 error_caf_no.append(caf_num)
     except Exception, e:
         print traceback.format_exc()
-        return ["System Error: " + str(e)]
+        return [{"error": "System Error: " + str(e)}]
 
     if uploaded:
-        msg.append("Following entries Updated: {}".format(', '.join(uploaded)))
+        msg.append({"success": "Following entries Updated: {}".format(', '.join(uploaded))})
         u = UploadFileHistory()
         u.file_name = ufile
         u.sheet_no = sheet_no
@@ -451,19 +465,21 @@ def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
         u.user = user
         u.save()
     else:
-        msg.append("No Entries Updated")
+        msg.append({"warning": "No Entries Updated"})
 
     if not_found_caf:
-        msg.append("Following entries Not found in Records: {}".format(', '.join(not_found_caf)))
+        msg.append({"error": "Following entries Not found in Records: {}".format(', '.join(not_found_caf))})
         pass
     else:
-        msg.append("All Given Entries Updated")
+        # msg.append("All Given Entries Updated")
+        pass
 
     if error_caf_no:
-        msg.append("Error in Following CAF Numbers: {}".format(', '.join(error_caf_no)))
+        msg.append({"error": "Error in Following CAF Numbers: {}".format(', '.join(error_caf_no))})
         pass
     else:
-        msg.append("No Error in any Entries")
+        pass
+        # msg.append("No Error in any Entries")
 
     return msg
 
@@ -473,13 +489,14 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     wb = xlrd.open_workbook(file_contents=ufile.read())
     # print wb.nsheets
     if sheet_no not in range(1, wb.nsheets + 1):
-        return ["Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)]
+        return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
 
     sheet = wb.sheet_by_index(sheet_no - 1)
     msg = []
     uploaded = []
     not_found_caf = []
     error_caf_no = []
+    error_pending_amt_caf = []
     error_caf_no_range = []
     try:
         for range_list in chunks(range(1, sheet.nrows), speed):
@@ -504,37 +521,40 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
 
                         if paid_user_obj_list:
                             latest_user_obj = paid_user_obj_list[0]
-                            remain_payment = float(latest_user_obj.pending_amt) - payment_amt
-                            # print latest_user_obj.account_balance, payment_amt, remain_payment
+                            if float(latest_user_obj.pending_amt) > payment_amt:
+                                latest_user_obj.pending_amt = Decimal(format(float(latest_user_obj.pending_amt) - payment_amt, '.2f'))
+                                # print latest_user_obj.account_balance, payment_amt, remain_payment
 
-                            if remain_payment < 100:
-                                latest_user_obj.status = "Paid"
+                                if latest_user_obj.pending_amt < 100:
+                                    latest_user_obj.status = "Paid"
+                                else:
+                                    latest_user_obj.status = "Partial Paid"
+                                # print "old pending", float(latest_user_obj.pending_amt)
+                                # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
+                                # print "new pending", float(latest_user_obj.pending_amt)
+                                # latest_user_obj.save()
+                                model_list.append(latest_user_obj)
+                                uploaded.append(caf_num)
                             else:
-                                latest_user_obj.status = "Partial Paid"
-                            # print "old pending", float(latest_user_obj.pending_amt)
-                            latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
-                            # print "new pending", float(latest_user_obj.pending_amt)
-                            # latest_user_obj.save()
-                            model_list.append(latest_user_obj)
-                            uploaded.append(caf_num)
+                                error_pending_amt_caf.append(caf_num)
                         else:
                             not_found_caf.append(caf_num)
-                    except Exception, e:
+                    except Exception as e:
                         print traceback.format_exc()
                         error_caf_no.append(str(caf_num))
-            except Exception, e:
+            except Exception as e:
                 print traceback.format_exc()
                 error_caf_no_range.append(
                     str(sheet.cell(range_list[0], 0).value) + " : " + str(sheet.cell(range_list[-1], 0).value))
             print model_list
             if model_list:
                 SupremeModel.objects.bulk_update(model_list, update_fields=['status', 'pending_amt'])
-    except Exception, e:
+    except Exception as e:
         print traceback.format_exc()
-        return ["System Error: " + str(e)]
+        return [{"error": "System Error: " + str(e)}]
 
     if uploaded:
-        msg.append("Following entries Updated: {}".format(', '.join(uploaded)))
+        msg.append({"success": "Following entries Updated: {}".format(', '.join(uploaded))})
         u = UploadFileHistory()
         u.file_name = ufile
         u.sheet_no = sheet_no
@@ -546,25 +566,34 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
         u.user = user
         u.save()
     else:
-        msg.append("No Entries Updated")
+        msg.append({"warning": "No Entries Updated"})
 
     if not_found_caf:
-        msg.append("Following entries Not found in Records: {}".format(', '.join(not_found_caf)))
+        msg.append({"warning": "Following entries Not found in Records: {}".format(', '.join(not_found_caf))})
         pass
     else:
-        msg.append("All Given Entries Updated")
+        # msg.append("All Given Entries Updated")
+        pass
+
+    if error_pending_amt_caf:
+        msg.append({"error": "Following entries Payment amount is grater than Pending amount: {}".format(', '.join(error_pending_amt_caf))})
+        pass
+    else:
+        pass
 
     if error_caf_no:
-        msg.append("Error in Following CAF Numbers: {}".format(', '.join(error_caf_no)))
+        msg.append({"error": "Error in Following CAF Numbers: {}".format(', '.join(error_caf_no))})
         pass
     else:
-        msg.append("No Error in any Entries")
+        # msg.append("No Error in any Entries")
+        pass
 
     if error_caf_no_range:
-        msg.append("Something Wrong in CAF range : {}".format(', '.join(error_caf_no_range)))
+        msg.append({"error": "Something Wrong in CAF range : {}".format(', '.join(error_caf_no_range))})
         pass
     else:
-        msg.append("No Error in any range of Entries")
+        # msg.append("No Error in any range of Entries")
+        pass
 
     return msg
 
@@ -573,10 +602,10 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
 def paid_upload(request):
     session_id = request.META['HTTP_COOKIE'].split()[1].split('=')[1]
     print session_id, "UPLOAD REQ"
-    messages = []
+    message_list = []
     print 'rm', request.method
     if request.method == 'POST':
-        form = UploadFileForm(request.POST, request.FILES)
+        form = PaidUploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             ufile = request.FILES['file']
             sheel_no = int(form.data['sheet_no'])
@@ -588,11 +617,22 @@ def paid_upload(request):
                 else:
                     msg = fast_upload_paid_excel_file(ufile, sheel_no, based_on, speed, request.user)
             else:
-                msg = [" .xls, .xlsx and .csv file formats are only supported."]
-            messages = msg
+                msg = [{"error": " .xls, .xlsx and .csv file formats are only supported."}]
+            message_list = msg
         else:
-            messages.append("Supply appropriate data.")
+            message_list.append({"error": "Supply appropriate data."})
     form = PaidUploadFileForm()
+    print message_list
+    for msg in message_list:
+        for k, v in msg.iteritems():
+            if k == "warning":
+                messages.warning(request, v)
+            elif k == "error":
+                print v
+                messages.error(request, v)
+            elif k == "success":
+                messages.success(request, v)
+
     results = UploadFileHistory.objects.filter(upload_type='P').order_by('-uploaded_date').values()
     return render(request, 'SupremeApp/paid_upload.html', locals())
 

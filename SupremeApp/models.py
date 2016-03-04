@@ -19,7 +19,7 @@ class SupremeModel(models.Model):
     phongen_status = models.CharField(max_length=30, null=True)
     desired_service = models.CharField(max_length=30, null=True)
     og_bar = models.CharField(max_length=30, null=True)
-    account_balance = models.DecimalField(max_digits=65, null=True, decimal_places=2, verbose_name="O/S Amt")
+    account_balance = models.DecimalField(max_digits=65, default=0, decimal_places=2, verbose_name="O/S Amt")
     account_balance.lookup_range = (
         (None, 'All'),
         ([0, 100], '0-100'),
@@ -28,7 +28,7 @@ class SupremeModel(models.Model):
         ([1000, 10000], '1000-10000'),
         ([10000, None], '10000+'),
     )
-    pending_amount = models.CharField(max_length=30, null=True)
+    # pending_amount = models.CharField(max_length=30, null=True)
     debtors_age = models.CharField(max_length=20, null=True)
     voluntary_deposit = models.CharField(max_length=30, null=True)
     unbilled_ild = models.CharField(max_length=30, null=True)
@@ -108,7 +108,7 @@ class SupremeModel(models.Model):
     allocation_date = models.DateField(null=True)
     closing_date = models.DateField(null=True)
     address = models.CharField(max_length=300, null=True)
-    pending_amt = models.DecimalField(max_digits=65, null=True, decimal_places=2, verbose_name='Pending Amount')
+    pending_amt = models.DecimalField(max_digits=65, default=0, decimal_places=2, verbose_name='Pending Amount')
     pending_amt.lookup_range = (
         (None, 'All'),
         ([0, 100], '0-100'),

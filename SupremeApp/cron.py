@@ -24,7 +24,7 @@ def run_backup_mail_cron():
                 upload_history = UploadFileHistory.objects.filter(upload_type="D", generate_new_report=True).order_by("-uploaded_date")
                 print upload_history
                 if upload_history:
-                    from_date = datetime.datetime.strftime(upload_history[0].uploaded_date, '%Y-%m-%d %H:%M:%S')
+                    from_date = datetime.datetime.strftime(upload_history[0].uploaded_date, '%Y-%m-%d %H:%M:00')
                     to_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d 23:59:59')
 
                     file_name = 'SUPREME_DATA_from_%s_to_%s.xlsx' %(datetime.datetime.strftime(upload_history[0].uploaded_date, '%d-%m-%Y'), datetime.datetime.strftime(datetime.datetime.now(), '%d-%m-%Y'))

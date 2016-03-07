@@ -504,23 +504,27 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
             # for col in range(sheet.ncols):
             #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
             model_list = []
+            caf_num_list = []
+            payment_amt_list = []
             try:
                 for i in range_list:
-                    caf_num = ''
-                    try:
-                        caf_num = try_to_str_int(sheet.cell(i, 0).value)
-                        payment_amt = float(sheet.cell(i, 1).value)
-                        # print caf_num, payment_amt, type(payment_amt)
+                    caf_num = try_to_str_int(sheet.cell(i, 0).value)
+                    caf_num_list.append(caf_num)
+                    payment_amt = float(sheet.cell(i, 1).value)
+                    payment_amt_list.append(payment_amt)
+                try:
+                    # get all objects related to given CAF number
+                    paid_user_obj_list = list(SupremeModel.objects.filter(caf_num__in=caf_num_list))
 
-                        # get all objects related to given CAF number
-                        paid_user_obj_list = list(SupremeModel.objects.filter(caf_num=caf_num))
-                        # print paid_user_obj_list
+                    # Sort to get latest object first
+                    paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
 
-                        # Sort to get latest object first
-                        paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
-
-                        if paid_user_obj_list:
-                            latest_user_obj = paid_user_obj_list[0]
+                    if paid_user_obj_list:
+                        for latest_user_obj in paid_user_obj_list:
+                            # latest_user_obj = paid_user_obj_list[0]
+                            val_index = caf_num_list.index(latest_user_obj.caf_num)
+                            payment_amt = payment_amt_list[val_index]
+                            caf_num = caf_num_list[val_index]
                             if float(latest_user_obj.pending_amt) > payment_amt:
                                 latest_user_obj.pending_amt = Decimal(format(float(latest_user_obj.pending_amt) - payment_amt, '.2f'))
                                 # print latest_user_obj.account_balance, payment_amt, remain_payment
@@ -536,12 +540,23 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
                                 model_list.append(latest_user_obj)
                                 uploaded.append(caf_num)
                             else:
+                                latest_user_obj.pending_amt = Decimal(format(float(0.00), '.2f'))
+                                if latest_user_obj.pending_amt < 100:
+                                    latest_user_obj.status = "Paid"
+                                else:
+                                    latest_user_obj.status = "Partial Paid"
+                                # print "old pending", float(latest_user_obj.pending_amt)
+                                # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
+                                # print "new pending", float(latest_user_obj.pending_amt)
+                                # latest_user_obj.save()
+                                model_list.append(latest_user_obj)
+                                uploaded.append(caf_num)
                                 error_pending_amt_caf.append(caf_num)
-                        else:
-                            not_found_caf.append(caf_num)
-                    except Exception as e:
-                        print traceback.format_exc()
-                        error_caf_no.append(str(caf_num))
+                    else:
+                        not_found_caf.append(caf_num)
+                except Exception as e:
+                    print traceback.format_exc()
+                    error_caf_no.append(str(caf_num))
             except Exception as e:
                 print traceback.format_exc()
                 error_caf_no_range.append(
@@ -812,6 +827,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     cluster_paid_data_dict = {i['cluster']: i for i in cluster_paid_data}
     # print cluster_paid_data_dict
     cluster_wise_performance_data = []
+    total_cluster = ['Totals', ]
     for cdata in cluster_data:
         cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
         if cdata['cluster'] in cluster_paid_data_dict:
@@ -826,29 +842,33 @@ def create_temp_xlsx_report_file(supreme_app_data):
             cluster_list.append(0)
         cluster_wise_performance_data.append(cluster_list)
     # print cluster_wise_performance_data
-
+    for k in range(1, 5):
+        total_cluster.append(sum(i[k] for i in cluster_wise_performance_data))
+    total_cluster.append(float(total_cluster[3] / total_cluster[1]))
+    total_cluster.append(float(total_cluster[4] / total_cluster[2]))
+    cluster_wise_performance_data.append(total_cluster)
     column_list = [
         {'header': 'Cluster',
-         'total_string': 'Totals'
+         # 'total_string': 'Totals'
          },
         {'header': 'Alloc Cnt',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Alloc Val',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Cnt',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Val',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Cnt %',
-         'total_function': 'average',
+         # 'total_function': 'average',
          'format': percent_format,
          },
         {'header': 'Res Val%',
-         'total_function': 'average',
+         # 'total_function': 'average',
          'format': percent_format,
          },
     ]
@@ -863,7 +883,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
         'columns': column_list
     }
 
-    last_raw = 4 + len(cluster_wise_performance_data)
+    last_raw = 3 + len(cluster_wise_performance_data)
     sheet.add_table(2, 0, last_raw, len(column_list) - 1, options)
 
     # *****************         TC wise Performance         *****************
@@ -881,6 +901,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     tc_paid_data_dict = {i['final_tc_name']: i for i in tc_paid_data}
     # print tc_paid_data_dict
     tc_wise_performance_data = []
+    total_tc = ['Totals', ]
     for tdata in tc_data:
         tc_list = [tdata['final_tc_name'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['final_tc_name'] in tc_paid_data_dict:
@@ -895,29 +916,33 @@ def create_temp_xlsx_report_file(supreme_app_data):
             tc_list.append(0)
         tc_wise_performance_data.append(tc_list)
     # print tc_wise_performance_data
-
+    for k in range(1, 5):
+        total_tc.append(sum(i[k] for i in tc_wise_performance_data))
+    total_tc.append(float(total_tc[3] / total_tc[1]))
+    total_tc.append(float(total_tc[4] / total_tc[2]))
+    tc_wise_performance_data.append(total_tc)
     column_list = [
         {'header': 'TC Name',
-         'total_string': 'Totals'
+         # 'total_string': 'Totals'
          },
         {'header': 'Alloc Cnt',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Alloc Val',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Cnt',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Val',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Cnt %',
-         'total_function': 'average',
+         # 'total_function': 'average',
          'format': percent_format,
          },
         {'header': 'Res Val%',
-         'total_function': 'average',
+         # 'total_function': 'average',
          'format': percent_format,
          },
     ]
@@ -949,6 +974,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     product_paid_data_dict = {i['service_subtype']: i for i in product_paid_data}
     # print product_paid_data_dict
     product_wise_performance_data = []
+    total_product = ['Totals', ]
     for tdata in product_data:
         product_list = [tdata['service_subtype'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['service_subtype'] in product_paid_data_dict:
@@ -963,29 +989,33 @@ def create_temp_xlsx_report_file(supreme_app_data):
             product_list.append(0)
         product_wise_performance_data.append(product_list)
     # print product_wise_performance_data
-
+    for k in range(1, 5):
+        total_product.append(sum(i[k] for i in product_wise_performance_data))
+    total_product.append(float(total_product[3] / total_product[1]))
+    total_product.append(float(total_product[4] / total_product[2]))
+    product_wise_performance_data.append(total_product)
     column_list = [
         {'header': 'Product',
-         'total_string': 'Totals'
+         # 'total_string': 'Totals'
          },
         {'header': 'Alloc Cnt',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Alloc Val',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Cnt',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Val',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
         {'header': 'Res Cnt %',
-         'total_function': 'average',
+         # 'total_function': 'average',
          'format': percent_format,
          },
         {'header': 'Res Val%',
-         'total_function': 'average',
+         # 'total_function': 'average',
          'format': percent_format,
          },
     ]
@@ -1017,6 +1047,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
     # print "\n\n"
     day_wise_trend_data = []
     day_wise_trend_percent = ['Per Day Res Cnt %', '']
+    total_day_wise = ['Totals', ]
     for tdata in SM:
         day_tc_list = [tdata['cluster'], tdata['alloc_cnt']]
         # print "\n"
@@ -1031,20 +1062,25 @@ def create_temp_xlsx_report_file(supreme_app_data):
                 day_wise_trend_percent.append(0.0)
         day_wise_trend_data.append(day_tc_list)
     # print day_wise_trend_data
-
+    total_day_wise.append(sum(i[1] for i in day_wise_trend_data))
+    k = 2
+    for day in days:
+        total_day_wise.append(sum(i[k] for i in day_wise_trend_data))
+        k += 1
+    day_wise_trend_data.append(total_day_wise)
 
     column_list = [
         {'header': 'Product',
-         'total_string': 'Totals'
+         # 'total_string': 'Totals'
          },
         {'header': 'Alloc Cnt',
-         'total_function': 'sum',
+         # 'total_function': 'sum',
          },
     ]
     for day in days:
         column_list.append({'header': day.strftime("%d/%B"),
                             # 'format': date_format,
-                            'total_function': 'sum',
+                            # 'total_function': 'sum',
                             })
     # print column_list
 
@@ -1371,10 +1407,35 @@ def create_temp_xlsx_report_file(supreme_app_data):
             sheet.write('C' + str(nlast_raw + 2), caption, bold)
 
             # Total Column
-            column_list.append({'header': 'Totals',
-                            'formula': '=SUM(Table7[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
-                            'total_function': 'sum',
-                            })
+            # column_list.append({'header': 'Totals',
+            #                 'formula': '=SUM(Table7[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
+            #                 'total_function': 'sum',
+            #                 })
+
+            column_list.append({'header': 'Totals'})
+            DISPO_LIST.append('')
+            CB.append(sum(map(int, CB[1:])))
+            RR.append(sum(map(int, RR[1:])))
+            OS.append(sum(map(int, OS[1:])))
+            SO.append(sum(map(int, SO[1:])))
+            CLMPD.append(sum(map(int, CLMPD[1:])))
+            WPD.append(sum(map(int, WPD[1:])))
+            PAID.append(sum(map(int, PAID[1:])))
+            PARTPAID.append(sum(map(int, PARTPAID[1:])))
+            BD.append(sum(map(int, BD[1:])))
+            BNR.append(sum(map(int, BNR[1:])))
+            NR.append(sum(map(int, NR[1:])))
+            RTP.append(sum(map(int, RTP[1:])))
+            PTP.append(sum(map(int, PTP[1:])))
+            CANCELLATION.append(sum(map(int, CANCELLATION[1:])))
+            SALES_ISSUE.append(sum(map(int, SALES_ISSUE[1:])))
+            WAIVERS.append(sum(map(int, WAIVERS[1:])))
+            Others.append(sum(map(int, Others[1:])))
+            no_call_list.append(sum(map(int, no_call_list[1:])))
+            repeat.append(sum(map(int, repeat[1:])))
+            fresh.append(sum(map(int, fresh[1:])))
+            contact.append(sum(map(int, contact[1:])))
+            no_contact.append(sum(map(int, no_contact[1:])))
 
             user_wise_trend_data.append(DISPO_LIST)
             user_wise_trend_data.append(CB)
@@ -1418,12 +1479,17 @@ def create_temp_xlsx_report_file(supreme_app_data):
             nlast_raw = last_raw
         if call_days:
             column_list1.append({'header': 'Avg',
-                            'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
-                            'total_function': 'average',
+                            # 'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
+                            # 'total_function': 'average',
                             'format': percent_format,
                             })
 
             user_wise_trend_data = []
+            print repeat_percent[1:]
+            repeat_percent.append(float(sum(map(float, repeat_percent[1:])))/len(repeat_percent[1:]))
+            fresh_percent.append(float(sum(map(float, fresh_percent[1:])))/len(fresh_percent[1:]))
+            contact_percent.append(float(sum(map(float, contact_percent[1:])))/len(contact_percent[1:]))
+            no_contact_percent.append(float(sum(map(float, no_contact_percent[1:])))/len(no_contact_percent[1:]))
             user_wise_trend_data.append(repeat_percent)
             user_wise_trend_data.append(fresh_percent)
             user_wise_trend_data.append(contact_percent)

@@ -1,3 +1,3 @@
 
 def global_context(request):
-    return {'SITE_NAME': 'Supreme', }
+    return {'SITE_NAME': 'VAISHANAVI', }

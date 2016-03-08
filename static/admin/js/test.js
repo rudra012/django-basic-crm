@@ -32,7 +32,7 @@ $(function(){
     }
 
     var temp = '';
-    var lst = new Array("CB", "PTP");
+    var lst = new Array("CB", "PTP", "WPD");
 
     function hideshowCBDate()
     {

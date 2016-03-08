@@ -196,8 +196,8 @@ class SupremeModel(models.Model):
     #     return "--".join([str(self.attempt), str(self.final_followup_date), self.cust_name])
 
     class Meta:
-        verbose_name = 'Supreme Data'
-        verbose_name_plural = 'Supreme Data'
+        verbose_name = 'VAISHNAVI Data'
+        verbose_name_plural = 'VAISHNAVI Data'
 
 
 class TCModel(models.Model):

@@ -107,12 +107,12 @@ class SupremeAdmin(admin.ModelAdmin):
         else:
             return self.list_display
 
-    search_fields = ('mdn_no', 'cust_name',)
+    search_fields = ('mdn_no', 'cust_name', 'caf_num')
     date_hierarchy = 'date_created'
     list_display_links = ('cust_name',)
     ordering = ('processed', '-final_followup_date')
 
-    list_filter = ['processed', 'bill_cycle', ('pending_amt', ValueRangeFilter), 'allocation_date',
+    list_filter = ['processed', 'bill_cycle', 'final_calling_code', ('pending_amt', ValueRangeFilter), 'allocation_date',
                    ('account_balance', ValueRangeFilter), 'status']
 
     # save_on_top = True

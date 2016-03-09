@@ -19,7 +19,8 @@ $(function(){
 
 
     $("#tcmodel_set-group table th")[1].style.display = 'none';
-    $(".field-followup_date")[1].style.display = 'none';
+    $("#tcmodel_set-0 .field-followup_date")[0].style.display = 'none';
+    $("#tcmodel_set-2-group p")[0].style.display = 'none';
     temp = $("#tcmodel_set-0-followup_date").val();
     $("#tcmodel_set-0-followup_date").val('');
     function isExist(arr,str) {
@@ -32,13 +33,13 @@ $(function(){
     }
 
     var temp = '';
-    var lst = new Array("CB", "PTP");
+    var lst = new Array("CB", "PTP", "OS");
 
     function hideshowCBDate()
     {
         if(!isExist(lst, $("#id_tcmodel_set-0-calling_code").val())) {
                 $("#tcmodel_set-group table th")[1].style.display = 'none';
-                $(".field-followup_date")[1].style.display = 'none';
+                $("#tcmodel_set-0 .field-followup_date")[0].style.display = 'none';
                 temp = $("#tcmodel_set-0-followup_date").val();
                 $("#tcmodel_set-0-followup_date").val('');
 
@@ -48,7 +49,7 @@ $(function(){
         {
             $("#tcmodel_set-0-followup_date").val(temp);
             $("#tcmodel_set-group table th")[1].style.display = 'block';
-            $(".field-followup_date")[1].style.display = 'block';
+            $("#tcmodel_set-0 .field-followup_date")[0].style.display = 'block';
 
             $("#tcmodel_set-group table th")[2].style.marginTop = '177px';
 
@@ -57,8 +58,10 @@ $(function(){
             $("#tcmodel_set-group table th")[1].style.width = '100%';
             $("#tcmodel_set-group table td")[2].style.marginTop = '50px';
         }
+        console.info("2 " + $("#tcmodel_set-0 .field-followup_date")[0].style.display);
     }
-
+//    alert();
+    console.info("1 " + $("#tcmodel_set-0 .field-followup_date")[0].style.display);
     hideshowCBDate();
 
     $("#id_tcmodel_set-0-calling_code").change(function() {

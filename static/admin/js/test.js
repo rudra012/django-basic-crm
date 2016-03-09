@@ -58,10 +58,8 @@ $(function(){
             $("#tcmodel_set-group table th")[1].style.width = '100%';
             $("#tcmodel_set-group table td")[2].style.marginTop = '50px';
         }
-        console.info("2 " + $("#tcmodel_set-0 .field-followup_date")[0].style.display);
     }
-//    alert();
-    console.info("1 " + $("#tcmodel_set-0 .field-followup_date")[0].style.display);
+
     hideshowCBDate();
 
     $("#id_tcmodel_set-0-calling_code").change(function() {

@@ -46,7 +46,7 @@ class SupremeModel(models.Model):
     billed_outstanding_amount = models.CharField(max_length=30, null=True)
     exposure = models.CharField(max_length=30, null=True)
     latest_bill_due_date = models.DateField(null=True)
-    no_of_invoice_raised = models.CharField(max_length=20, null=True)
+    no_of_invoice_raised = models.CharField(max_length=20, null=True, verbose_name="No. of Invoice")
     total_invoice_amout = models.CharField(max_length=30, null=True)
     no_of_payments_made = models.CharField(max_length=30, null=True, verbose_name="No. of Payments Made")
     payments_made_till_date = models.CharField(max_length=30, null=True)
@@ -117,7 +117,7 @@ class SupremeModel(models.Model):
         ([1000, 10000], '1000-10000'),
         ([10000, None], '10000+'),
     )
-
+    new_email = models.CharField(max_length=100, null=True, blank=True)
     # tc_name = models.CharField(max_length=50, null=True)
     # calling_date = models.DateTimeField(null=True, verbose_name="Calling Date")
     # calling_code = models.CharField(max_length=100, null=True, choices=[("CB",) * 2,
@@ -191,6 +191,13 @@ class SupremeModel(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, auto_now=False, verbose_name="Data Uploaded")
     date_modified = models.DateTimeField(auto_now_add=False, auto_now=True)  #
     objects = BulkUpdateManager()
+
+    extra1 = models.CharField(max_length=100, null=True, blank=True)
+    extra2 = models.CharField(max_length=100, null=True, blank=True)
+    extra3 = models.CharField(max_length=100, null=True, blank=True)
+    extra4 = models.CharField(max_length=100, null=True, blank=True)
+    extra5 = models.CharField(max_length=100, null=True, blank=True)
+    extra6 = models.CharField(max_length=100, null=True, blank=True)
 
     # def __repr__(self):
     #     return "--".join([str(self.attempt), str(self.final_followup_date), self.cust_name])

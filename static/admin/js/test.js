@@ -59,7 +59,6 @@ $(function(){
             $("#tcmodel_set-group table td")[2].style.marginTop = '50px';
         }
     }
-
     hideshowCBDate();
 
     $("#id_tcmodel_set-0-calling_code").change(function() {

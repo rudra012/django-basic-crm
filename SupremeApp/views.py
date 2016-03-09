@@ -13,7 +13,6 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-
 from SupremeApp.form import *
 from SupremeApp.models import *
 
@@ -102,9 +101,9 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
                     billed_outstanding_amount=sheet.cell(i, 29).value,
                     exposure=sheet.cell(i, 30).value,
                     latest_bill_due_date=xmldate_to_pdate(sheet.cell(i, 31).value),
-                    no_of_invoice_raised=sheet.cell(i, 32).value,
+                    no_of_invoice_raised=try_to_str_int(sheet.cell(i, 32).value),
                     total_invoice_amout=sheet.cell(i, 33).value,
-                    no_of_payments_made=sheet.cell(i, 34).value,
+                    no_of_payments_made=try_to_str_int(sheet.cell(i, 34).value),
                     payments_made_till_date=sheet.cell(i, 35).value,
                     total_adjustment_amount=sheet.cell(i, 36).value,
                     dapo_amount=sheet.cell(i, 37).value,
@@ -156,7 +155,7 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
                     email_id=sheet.cell(i, 83).value,
                     corp_cust_category=sheet.cell(i, 84).value,
                     mnp_flag=sheet.cell(i, 85).value,
-                    bill_cycle=sheet.cell(i, 86).value,
+                    bill_cycle=try_to_str_int(sheet.cell(i, 86).value),
                     bill_delivery_mode=sheet.cell(i, 87).value,
                     company_name=sheet.cell(i, 88).value,
                     barring_reason=sheet.cell(i, 89).value,
@@ -504,31 +503,46 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
             # for col in range(sheet.ncols):
             #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
             model_list = []
-            caf_num_list = []
-            payment_amt_list = []
+            # caf_num_list = []
+            # payment_amt_list = []
+            caf_payment_dict = {}
             try:
                 for i in range_list:
-                    caf_num = try_to_str_int(sheet.cell(i, 0).value)
-                    caf_num_list.append(caf_num)
-                    payment_amt = float(sheet.cell(i, 1).value)
-                    payment_amt_list.append(payment_amt)
-                try:
-                    # get all objects related to given CAF number
-                    paid_user_obj_list = list(SupremeModel.objects.filter(caf_num__in=caf_num_list))
+                    caf_payment_dict[try_to_str_int(sheet.cell(i, 0).value)] = float(sheet.cell(i, 1).value)
+                    # caf_num_list.append(try_to_str_int(sheet.cell(i, 0).value))
+                    # payment_amt_list.append(float(sheet.cell(i, 1).value))
+                # print caf_num_list, payment_amt_list
+                print "CAF", caf_payment_dict
+                # try:
+                # get all objects related to given CAF number
+                paid_user_obj_list = list(SupremeModel.objects.filter(caf_num__in=caf_payment_dict.keys()))
+                print paid_user_obj_list
+                paid_user_obj_dict = {}
+                if paid_user_obj_list:
+                    for paid_user in paid_user_obj_list:
+                        if paid_user.caf_num in paid_user_obj_dict.keys():
+                            paid_user_obj_dict[paid_user.caf_num].append(paid_user)
+                        else:
+                            paid_user_obj_dict[paid_user.caf_num] = [paid_user]
+                print paid_user_obj_dict
+                # Sort to get latest object first
+                # paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
+                # print paid_user_obj_list
 
-                    # Sort to get latest object first
-                    paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
-
-                    if paid_user_obj_list:
-                        for latest_user_obj in paid_user_obj_list:
-                            # latest_user_obj = paid_user_obj_list[0]
-                            val_index = caf_num_list.index(latest_user_obj.caf_num)
-                            payment_amt = payment_amt_list[val_index]
-                            caf_num = caf_num_list[val_index]
+                if paid_user_obj_dict:
+                    for caf_num, paid_user_obj_list in paid_user_obj_dict.items():
+                        # latest_user_obj = paid_user_obj_list[0]
+                        try:
+                            print(paid_user_obj_list)
+                            paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
+                            latest_user_obj = paid_user_obj_list[0]
+                            payment_amt = caf_payment_dict[latest_user_obj.caf_num]
+                            print latest_user_obj, payment_amt, latest_user_obj.pending_amt
                             if float(latest_user_obj.pending_amt) > payment_amt:
-                                latest_user_obj.pending_amt = Decimal(format(float(latest_user_obj.pending_amt) - payment_amt, '.2f'))
-                                # print latest_user_obj.account_balance, payment_amt, remain_payment
-
+                                latest_user_obj.pending_amt = Decimal(
+                                    format(float(latest_user_obj.pending_amt) - payment_amt, '.2f'))
+                                print latest_user_obj.pending_amt, payment_amt
+                                print latest_user_obj.pending_amt
                                 if latest_user_obj.pending_amt < 100:
                                     latest_user_obj.status = "Paid"
                                 else:
@@ -538,30 +552,36 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
                                 # print "new pending", float(latest_user_obj.pending_amt)
                                 # latest_user_obj.save()
                                 model_list.append(latest_user_obj)
-                                uploaded.append(caf_num)
+                                uploaded.append(latest_user_obj.caf_num)
                             else:
                                 latest_user_obj.pending_amt = Decimal(format(float(0.00), '.2f'))
-                                if latest_user_obj.pending_amt < 100:
-                                    latest_user_obj.status = "Paid"
-                                else:
-                                    latest_user_obj.status = "Partial Paid"
+                                latest_user_obj.status = "Paid"
+
+                                # if latest_user_obj.pending_amt < 100:
+                                #     latest_user_obj.status = "Paid"
+                                # else:
+                                #     latest_user_obj.status = "Partial Paid"
+
                                 # print "old pending", float(latest_user_obj.pending_amt)
                                 # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
                                 # print "new pending", float(latest_user_obj.pending_amt)
                                 # latest_user_obj.save()
                                 model_list.append(latest_user_obj)
-                                uploaded.append(caf_num)
-                                error_pending_amt_caf.append(caf_num)
-                    else:
-                        not_found_caf.append(caf_num)
-                except Exception as e:
-                    print traceback.format_exc()
-                    error_caf_no.append(str(caf_num))
+                                uploaded.append(latest_user_obj.caf_num)
+                                error_pending_amt_caf.append(latest_user_obj.caf_num)
+                        except:
+                            error_caf_no.append(caf_num)
+                else:
+                    pass
+                    # not_found_caf.append(latest_user_obj.caf_num)
             except Exception as e:
-                print traceback.format_exc()
-                error_caf_no_range.append(
-                    str(sheet.cell(range_list[0], 0).value) + " : " + str(sheet.cell(range_list[-1], 0).value))
-            print model_list
+                # print traceback.format_exc()
+                error_caf_no += caf_payment_dict.keys()
+            # except Exception as e:
+            #     print traceback.format_exc()
+            #     error_caf_no_range.append(
+            #         str(sheet.cell(range_list[0], 0).value) + " : " + str(sheet.cell(range_list[-1], 0).value))
+            # print model_list
             if model_list:
                 SupremeModel.objects.bulk_update(model_list, update_fields=['status', 'pending_amt'])
     except Exception as e:
@@ -591,7 +611,8 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
         pass
 
     if error_pending_amt_caf:
-        msg.append({"error": "Following entries Payment amount is grater than Pending amount: {}".format(', '.join(error_pending_amt_caf))})
+        msg.append({"error": "Following entries Payment amount is grater than Pending amount: {}".format(
+            ', '.join(error_pending_amt_caf))})
         pass
     else:
         pass
@@ -603,12 +624,12 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
         # msg.append("No Error in any Entries")
         pass
 
-    if error_caf_no_range:
-        msg.append({"error": "Something Wrong in CAF range : {}".format(', '.join(error_caf_no_range))})
-        pass
-    else:
+    # if error_caf_no_range:
+    #     msg.append({"error": "Something Wrong in CAF range : {}".format(', '.join(error_caf_no_range))})
+    #     pass
+    # else:
         # msg.append("No Error in any range of Entries")
-        pass
+        # pass
 
     return msg
 
@@ -831,8 +852,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for cdata in cluster_data:
         cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
         if cdata['cluster'] in cluster_paid_data_dict:
-            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_cnt'] is None else cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
-            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_val'] is None else cluster_paid_data_dict[cdata['cluster']]['res_val'])
+            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_cnt'] is None else
+                                cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
+            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_val'] is None else
+                                cluster_paid_data_dict[cdata['cluster']]['res_val'])
             cluster_list.append(float(cluster_list[3] / cluster_list[1]))
             cluster_list.append(float(cluster_list[4] / cluster_list[2]))
         else:
@@ -905,8 +928,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for tdata in tc_data:
         tc_list = [tdata['final_tc_name'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['final_tc_name'] in tc_paid_data_dict:
-            tc_list.append(0 if tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'] is None else tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'])
-            tc_list.append(0 if tc_paid_data_dict[tdata['final_tc_name']]['res_val'] is None else tc_paid_data_dict[tdata['final_tc_name']]['res_val'])
+            tc_list.append(0 if tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'] is None else
+                           tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'])
+            tc_list.append(0 if tc_paid_data_dict[tdata['final_tc_name']]['res_val'] is None else
+                           tc_paid_data_dict[tdata['final_tc_name']]['res_val'])
             tc_list.append(float(tc_list[3] / tc_list[1]))
             tc_list.append(float(tc_list[4] / tc_list[2]))
         else:
@@ -978,8 +1003,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for tdata in product_data:
         product_list = [tdata['service_subtype'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['service_subtype'] in product_paid_data_dict:
-            product_list.append(0 if product_paid_data_dict[tdata['service_subtype']]['res_cnt'] is None else product_paid_data_dict[tdata['service_subtype']]['res_cnt'])
-            product_list.append(0 if product_paid_data_dict[tdata['service_subtype']]['res_val'] is None else product_paid_data_dict[tdata['service_subtype']]['res_val'])
+            product_list.append(0 if product_paid_data_dict[tdata['service_subtype']]['res_cnt'] is None else
+                                product_paid_data_dict[tdata['service_subtype']]['res_cnt'])
+            product_list.append(0 if product_paid_data_dict[tdata['service_subtype']]['res_val'] is None else
+                                product_paid_data_dict[tdata['service_subtype']]['res_val'])
             product_list.append(float(product_list[3] / product_list[1]))
             product_list.append(float(product_list[4] / product_list[2]))
         else:
@@ -1052,8 +1079,11 @@ def create_temp_xlsx_report_file(supreme_app_data):
         day_tc_list = [tdata['cluster'], tdata['alloc_cnt']]
         # print "\n"
         for day in days:
-            day_paid_data = supreme_app_data.filter(status='Paid', date_modified__year=day.strftime("%Y"), date_modified__month=day.strftime("%m"),
-                                                    date_modified__day=day.strftime("%d"), cluster=tdata['cluster']).aggregate(res_cnt=Sum('no_of_active_services'))
+            day_paid_data = supreme_app_data.filter(status='Paid', date_modified__year=day.strftime("%Y"),
+                                                    date_modified__month=day.strftime("%m"),
+                                                    date_modified__day=day.strftime("%d"),
+                                                    cluster=tdata['cluster']).aggregate(
+                res_cnt=Sum('no_of_active_services'))
             if day_paid_data['res_cnt']:
                 day_tc_list.append(day_paid_data['res_cnt'])
                 day_wise_trend_percent.append(float(day_paid_data['res_cnt'] / tdata['alloc_cnt']))
@@ -1160,8 +1190,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for cdata in cluster_data:
         cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
         if cdata['cluster'] in cluster_paid_data_dict:
-            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_cnt'] is None else cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
-            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_val'] is None else cluster_paid_data_dict[cdata['cluster']]['res_val'])
+            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_cnt'] is None else
+                                cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
+            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_val'] is None else
+                                cluster_paid_data_dict[cdata['cluster']]['res_val'])
             cluster_list.append(float(cluster_list[3] / cluster_list[1]))
             cluster_list.append(float(cluster_list[4] / cluster_list[2]))
         else:
@@ -1173,8 +1205,11 @@ def create_temp_xlsx_report_file(supreme_app_data):
 
         # no_of_invoice_raised
         for i in range(1, 4):
-            cluster_invoice_raised_data = supreme_app_data.filter(no_of_invoice_raised=float(i), cluster=cdata['cluster']).aggregate(alloc_cnt=Sum('no_of_active_services'), alloc_val=Sum('account_balance'))
-            cluster_invoice_raised_paid_data = supreme_app_data.filter(status='Paid', no_of_invoice_raised=float(i), cluster=cdata['cluster']).aggregate(
+            cluster_invoice_raised_data = supreme_app_data.filter(no_of_invoice_raised=float(i),
+                                                                  cluster=cdata['cluster']).aggregate(
+                alloc_cnt=Sum('no_of_active_services'), alloc_val=Sum('account_balance'))
+            cluster_invoice_raised_paid_data = supreme_app_data.filter(status='Paid', no_of_invoice_raised=float(i),
+                                                                       cluster=cdata['cluster']).aggregate(
                 res_cnt=Sum('no_of_active_services'), res_val=Sum('account_balance'))
             print cluster_invoice_raised_data
             print cluster_invoice_raised_paid_data
@@ -1296,8 +1331,9 @@ def create_temp_xlsx_report_file(supreme_app_data):
         call_days = []
         for day in days:
             user_supreme_app_data = supreme_app_data.filter(processed=True, final_calling_date__year=day.strftime("%Y"),
-                                                    final_calling_date__month=day.strftime("%m"),
-                                                    final_calling_date__day=day.strftime("%d"), final_tc_name=user)
+                                                            final_calling_date__month=day.strftime("%m"),
+                                                            final_calling_date__day=day.strftime("%d"),
+                                                            final_tc_name=user)
 
             total_call = user_supreme_app_data.count()
             if not total_call:
@@ -1305,8 +1341,8 @@ def create_temp_xlsx_report_file(supreme_app_data):
             call_days.append(day)
             column_list.append({'header': day.strftime("%d/%B"), })
             column_list1.append({'header': day.strftime("%d/%B"),
-                                'format': percent_format,
-                                })
+                                 'format': percent_format,
+                                 })
             no_call_list.append(total_call)
 
             total_repeat = 0
@@ -1479,17 +1515,17 @@ def create_temp_xlsx_report_file(supreme_app_data):
             nlast_raw = last_raw
         if call_days:
             column_list1.append({'header': 'Avg',
-                            # 'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
-                            # 'total_function': 'average',
-                            'format': percent_format,
-                            })
+                                 # 'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
+                                 # 'total_function': 'average',
+                                 'format': percent_format,
+                                 })
 
             user_wise_trend_data = []
             print repeat_percent[1:]
-            repeat_percent.append(float(sum(map(float, repeat_percent[1:])))/len(repeat_percent[1:]))
-            fresh_percent.append(float(sum(map(float, fresh_percent[1:])))/len(fresh_percent[1:]))
-            contact_percent.append(float(sum(map(float, contact_percent[1:])))/len(contact_percent[1:]))
-            no_contact_percent.append(float(sum(map(float, no_contact_percent[1:])))/len(no_contact_percent[1:]))
+            repeat_percent.append(float(sum(map(float, repeat_percent[1:]))) / len(repeat_percent[1:]))
+            fresh_percent.append(float(sum(map(float, fresh_percent[1:]))) / len(fresh_percent[1:]))
+            contact_percent.append(float(sum(map(float, contact_percent[1:]))) / len(contact_percent[1:]))
+            no_contact_percent.append(float(sum(map(float, no_contact_percent[1:]))) / len(no_contact_percent[1:]))
             user_wise_trend_data.append(repeat_percent)
             user_wise_trend_data.append(fresh_percent)
             user_wise_trend_data.append(contact_percent)

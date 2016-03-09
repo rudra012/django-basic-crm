@@ -3,16 +3,15 @@ from django.conf import settings
 from django.contrib import admin
 from django.db import models
 from string import join
-
 from .models import *
 from django.db.models import Q
 from django.forms import TextInput, Textarea
 from datetimewidget.widgets import DateTimeWidget
 from django.contrib import messages
-
 from django.contrib.auth.models import User
 from SupremeApp.models import SupremeModel, TCModel
 from valuerangefilter import ValueRangeFilter
+
 
 class TCaddInline(admin.TabularInline):
     model = TCModel
@@ -44,7 +43,7 @@ class TCaddInline(admin.TabularInline):
         'autoclose': True
     }
     formfield_overrides = {
-        models.DateTimeField: {'widget': DateTimeWidget(options=dateTimeOptions,)},
+        models.DateTimeField: {'widget': DateTimeWidget(options=dateTimeOptions, )},
     }
 
 
@@ -71,13 +70,13 @@ class SupremeAdmin(admin.ModelAdmin):
         ('Customer Details',
          dict(fields=[
              ('caf_num', 'account_balance',),
-             ('cust_name', 'no_of_payments_made',),
+             ('cust_name', 'no_of_invoice_raised',),
              ('mdn_no', 'rate_plan',),
              ('alternate_landline_number', 'otaf_date',),
              ('alternate_mobile_number', 'bill_cycle',),
              ('address', 'cluster',),
              ('email_id', 'bill_delivery_mode'),
-             ('attempt',),
+             ('new_email', 'attempt',),
          ], )),
         # ('',
         #  dict(fields=[
@@ -92,8 +91,8 @@ class SupremeAdmin(admin.ModelAdmin):
     readonly_fields = (
         'caf_num', 'cust_name', 'mdn_no', 'rate_plan', 'otaf_date', 'account_balance', 'no_of_payments_made', 'address',
         'cluster', 'alternate_landline_number', 'alternate_mobile_number', 'email_id', 'bill_cycle', 'attempt',
-        'bill_delivery_mode',
-        'final_calling_date', 'final_calling_code', 'final_followup_date', 'final_calling_remarks',
+        'bill_delivery_mode', 'no_of_invoice_raised', 'final_calling_date', 'final_calling_code', 'final_followup_date',
+        'final_calling_remarks',
     )
 
     list_display = (
@@ -103,17 +102,17 @@ class SupremeAdmin(admin.ModelAdmin):
 
     def get_list_display(self, request):
         if request.user.is_superuser:
-            return self.list_display + ('final_tc_name', )
+            return self.list_display + ('final_tc_name',)
         else:
             return self.list_display
 
-    search_fields = ('mdn_no', 'cust_name',)
+    search_fields = ('mdn_no', 'cust_name', 'caf_num')
     date_hierarchy = 'date_created'
     list_display_links = ('cust_name',)
     ordering = ('processed', '-final_followup_date')
 
-    list_filter = ['processed', 'bill_cycle', ('pending_amt', ValueRangeFilter), 'allocation_date',
-                   ('account_balance', ValueRangeFilter), 'status']
+    list_filter = ['processed', 'bill_cycle', 'final_calling_code', ('pending_amt', ValueRangeFilter),
+                   'allocation_date', ('account_balance', ValueRangeFilter), 'status']
 
     # save_on_top = True
 
@@ -248,6 +247,7 @@ class SettingAdmin(admin.ModelAdmin):
         actions = super(SettingAdmin, self).get_actions(request)
         del actions['delete_selected']
         return actions
+
     # admin.site.disable_action('delete_selected')
     list_display = ('title', 'active_days', 'time')
     fields = ['title', 'days', 'time']
@@ -276,6 +276,7 @@ class SettingAdmin(admin.ModelAdmin):
             return join(lst, ", ")
         else:
             return "-"
+
     dateTimeOptions = {
         'format': 'hh:ii:00',
         'pickerPosition': 'top-right',
@@ -288,7 +289,7 @@ class SettingAdmin(admin.ModelAdmin):
     }
 
     formfield_overrides = {
-        models.TimeField: {'widget': DateTimeWidget(options=dateTimeOptions,)},
+        models.TimeField: {'widget': DateTimeWidget(options=dateTimeOptions, )},
     }
 
 

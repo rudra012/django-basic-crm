@@ -20,7 +20,7 @@ $(function(){
 
     $("#tcmodel_set-group table th")[1].style.display = 'none';
     $("#tcmodel_set-0 .field-followup_date")[0].style.display = 'none';
-    $("#tcmodel_set-2-group p")[0].style.display = 'none';
+    $("#tcmodel_set-2-group .original p").hide();
     temp = $("#tcmodel_set-0-followup_date").val();
     $("#tcmodel_set-0-followup_date").val('');
     function isExist(arr,str) {

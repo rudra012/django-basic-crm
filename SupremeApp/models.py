@@ -225,6 +225,7 @@ class TCModel(models.Model):
                                                                         ("CANCELLATION",) * 2,
                                                                         ("SALES ISSUE",) * 2,
                                                                         ("WAIVERS",) * 2,
+                                                                        ("NETWORK",) * 2,
                                                                         ("Others",) * 2, ],
                                     verbose_name="Dispo Code")
     calling_remarks = models.CharField(max_length=250, null=True, verbose_name="Remarks")

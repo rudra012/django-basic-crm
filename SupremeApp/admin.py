@@ -160,6 +160,8 @@ class SupremeAdmin(admin.ModelAdmin):
         obj.__setattr__('final_calling_code', form.data['tcmodel_set-0-calling_code'])
         if final_followup_date:
             obj.final_followup_date = final_followup_date
+        else:
+            obj.final_followup_date = None
         obj.final_calling_date = datetime.datetime.now()
         obj.final_tc_name = str(request.user)
         obj.processed = True

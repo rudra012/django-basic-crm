@@ -1014,12 +1014,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for tdata in product_data:
         product_list = [tdata['service_subtype'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['service_subtype'] in product_paid_data_dict:
-            res_cnt = 0 if not product_paid_data_dict[tdata['cluster']]['res_cnt'] else \
-                product_paid_data_dict[tdata['cluster']]['res_cnt']
-            account_balance = 0 if not product_paid_data_dict[tdata['cluster']]['account_balance'] else \
-                product_paid_data_dict[tdata['cluster']]['account_balance']
-            pending_amt = 0 if not product_paid_data_dict[tdata['cluster']]['pending_amt'] else \
-                product_paid_data_dict[tdata['cluster']]['pending_amt']
+            res_cnt = 0 if not product_paid_data_dict[tdata['service_subtype']]['res_cnt'] else \
+                product_paid_data_dict[tdata['service_subtype']]['res_cnt']
+            account_balance = 0 if not product_paid_data_dict[tdata['service_subtype']]['account_balance'] else \
+                product_paid_data_dict[tdata['service_subtype']]['account_balance']
+            pending_amt = 0 if not product_paid_data_dict[tdata['service_subtype']]['pending_amt'] else \
+                product_paid_data_dict[tdata['service_subtype']]['pending_amt']
             res_val = account_balance - pending_amt
             product_list.append(res_cnt)
             product_list.append(res_val)

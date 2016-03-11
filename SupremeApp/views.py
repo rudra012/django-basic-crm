@@ -196,7 +196,7 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
 def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_report):
     print('speed reading file', ufile, speed)
     wb = xlrd.open_workbook(file_contents=ufile.read())
-    print wb.nsheets
+    # print wb.nsheets
     if sheet_no not in range(1, wb.nsheets + 1):
         return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
 
@@ -207,7 +207,7 @@ def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate
     error_mobile_no_range = []
     try:
         for range_list in chunks(range(1, sheet.nrows), speed):
-            # print(range_list)
+            print(range_list[0], range_list[-1])
             # for col in range(sheet.ncols):
             #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
             model_list = []
@@ -499,7 +499,7 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     error_caf_no_range = []
     try:
         for range_list in chunks(range(1, sheet.nrows), speed):
-            # print(range_list)
+            print(range_list[0], range_list[-1])
             # for col in range(sheet.ncols):
             #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
             model_list = []
@@ -512,7 +512,7 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
                     # caf_num_list.append(try_to_str_int(sheet.cell(i, 0).value))
                     # payment_amt_list.append(float(sheet.cell(i, 1).value))
                 # print caf_num_list, payment_amt_list
-                print "CAF", caf_payment_dict
+                # print "CAF", caf_payment_dict
                 # try:
                 # get all objects related to given CAF number
                 paid_user_obj_list = list(SupremeModel.objects.filter(caf_num__in=caf_payment_dict.keys()))
@@ -576,7 +576,7 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
                     pass
                     # not_found_caf.append(latest_user_obj.caf_num)
             except Exception as e:
-                # print traceback.format_exc()
+                print traceback.format_exc()
                 error_caf_no += caf_payment_dict.keys()
             # except Exception as e:
             #     print traceback.format_exc()
@@ -762,7 +762,7 @@ def create_temp_xlsx_data_file(supreme_app_data):
     for i, data in enumerate(supreme_app_data):
         j = i + 1
         i_var = IncrementVar(-1)
-        print j, i_var
+        # print j, i_var
         sheet.write(j, i_var.inc_var, data.caf_num)
         sheet.write(j, i_var.inc_var, data.cust_name)
         sheet.write(j, i_var.inc_var, data.mdn_no)
@@ -787,10 +787,10 @@ def create_temp_xlsx_data_file(supreme_app_data):
         sheet.write(j, i_var.inc_var, data.status, bold)
 
         tc_details = TCModel.objects.filter(superme_key_id=data.id)
-        print tc_details
+        # print tc_details
         heading_end = len(heading)
         for tc_index, detail in enumerate(tc_details):
-            print tc_index, detail
+            # print tc_index, detail
             i_var_2 = IncrementVar(heading_end - 1)
             sheet.write(0, i_var_2.inc_var + tc_index, "TC %sth Dispo Code" % (tc_index + 1), yellow_bg)
             sheet.write(0, i_var_2.inc_var + tc_index, "TC %sth CB/PTP Date" % (tc_index + 1), green_bg)
@@ -1242,8 +1242,8 @@ def create_temp_xlsx_report_file(supreme_app_data):
             cluster_invoice_raised_paid_data = supreme_app_data.filter(status='Paid', no_of_invoice_raised=float(i),
                                                                        cluster=cdata['cluster']).aggregate(
                 res_cnt=Sum('no_of_active_services'), res_val=Sum('account_balance'))
-            print cluster_invoice_raised_data
-            print cluster_invoice_raised_paid_data
+            # print cluster_invoice_raised_data
+            # print cluster_invoice_raised_paid_data
             # print cluster_invoice_raised_paid_data
             # cluster_invoice_raised_paid_data_dict = {i['cluster']: i for i in cluster_invoice_raised_paid_data}
             # print cluster_paid_data_dict
@@ -1537,7 +1537,7 @@ def create_temp_xlsx_report_file(supreme_app_data):
             user_wise_trend_data.append(WAIVERS)
             user_wise_trend_data.append(Others)
 
-            print column_list
+            # print column_list
             options = {
                 'data': user_wise_trend_data,
                 'style': 'Table Style Medium 10',

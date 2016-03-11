@@ -538,37 +538,38 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
                             latest_user_obj = paid_user_obj_list[0]
                             payment_amt = caf_payment_dict[latest_user_obj.caf_num]
                             print latest_user_obj, payment_amt, latest_user_obj.pending_amt
-                            if float(latest_user_obj.pending_amt) > payment_amt:
-                                latest_user_obj.pending_amt = Decimal(
-                                    format(float(latest_user_obj.pending_amt) - payment_amt, '.2f'))
-                                print latest_user_obj.pending_amt, payment_amt
-                                print latest_user_obj.pending_amt
-                                if latest_user_obj.pending_amt < 100:
-                                    latest_user_obj.status = "Paid"
-                                else:
-                                    latest_user_obj.status = "Partial Paid"
-                                # print "old pending", float(latest_user_obj.pending_amt)
-                                # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
-                                # print "new pending", float(latest_user_obj.pending_amt)
-                                # latest_user_obj.save()
-                                model_list.append(latest_user_obj)
-                                uploaded.append(latest_user_obj.caf_num)
-                            else:
-                                latest_user_obj.pending_amt = Decimal(format(float(0.00), '.2f'))
+                            # if float(latest_user_obj.pending_amt) > payment_amt:
+
+                            latest_user_obj.pending_amt = Decimal(
+                                format(float(latest_user_obj.pending_amt) - payment_amt, '.2f'))
+                            if latest_user_obj.pending_amt < 100:
                                 latest_user_obj.status = "Paid"
+                            else:
+                                latest_user_obj.status = "Partial Paid"
+                            print latest_user_obj.pending_amt, payment_amt, latest_user_obj.status
+                            # print "old pending", float(latest_user_obj.pending_amt)
+                            # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
+                            # print "new pending", float(latest_user_obj.pending_amt)
+                            # latest_user_obj.save()
+                            model_list.append(latest_user_obj)
+                            uploaded.append(latest_user_obj.caf_num)
 
-                                # if latest_user_obj.pending_amt < 100:
-                                #     latest_user_obj.status = "Paid"
-                                # else:
-                                #     latest_user_obj.status = "Partial Paid"
+                            # else:
+                            #     latest_user_obj.pending_amt = Decimal(format(float(0.00), '.2f'))
+                            #     latest_user_obj.status = "Paid"
 
-                                # print "old pending", float(latest_user_obj.pending_amt)
-                                # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
-                                # print "new pending", float(latest_user_obj.pending_amt)
-                                # latest_user_obj.save()
-                                model_list.append(latest_user_obj)
-                                uploaded.append(latest_user_obj.caf_num)
-                                error_pending_amt_caf.append(latest_user_obj.caf_num)
+                            # if latest_user_obj.pending_amt < 100:
+                            #     latest_user_obj.status = "Paid"
+                            # else:
+                            #     latest_user_obj.status = "Partial Paid"
+
+                            # print "old pending", float(latest_user_obj.pending_amt)
+                            # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
+                            # print "new pending", float(latest_user_obj.pending_amt)
+                            # latest_user_obj.save()
+                            # model_list.append(latest_user_obj)
+                            # uploaded.append(latest_user_obj.caf_num)
+                            # error_pending_amt_caf.append(latest_user_obj.caf_num)
                         except:
                             error_caf_no.append(caf_num)
                 else:
@@ -624,10 +625,10 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
         # msg.append("No Error in any Entries")
         pass
 
-    # if error_caf_no_range:
-    #     msg.append({"error": "Something Wrong in CAF range : {}".format(', '.join(error_caf_no_range))})
-    #     pass
-    # else:
+        # if error_caf_no_range:
+        #     msg.append({"error": "Something Wrong in CAF range : {}".format(', '.join(error_caf_no_range))})
+        #     pass
+        # else:
         # msg.append("No Error in any range of Entries")
         # pass
 

@@ -953,6 +953,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
     # print tc_wise_performance_data
     for k in range(1, 5):
         total_tc.append(sum(i[k] for i in tc_wise_performance_data))
+    tc_wise_performance_data = sorted(tc_wise_performance_data, key=lambda x: x[3], reverse=True)
+    i_var = IncrementVar()
+    # lambda x: x.append(i_var.inc_var) for x in tc_wise_performance_data
+    [x.append(i_var.inc_var) for x in tc_wise_performance_data]
+    # for x in tc_wise_performance_data:
+    #     x.append(i_var.inc_var)
     total_tc.append(float(total_tc[3] / total_tc[1]))
     total_tc.append(float(total_tc[4] / total_tc[2]))
     tc_wise_performance_data.append(total_tc)
@@ -979,6 +985,9 @@ def create_temp_xlsx_report_file(supreme_app_data):
         {'header': 'Res Val%',
          # 'total_function': 'average',
          'format': percent_format,
+         },
+        {'header': 'Rank',
+         # 'total_function': 'average',
          },
     ]
     options = {
@@ -1498,7 +1507,6 @@ def create_temp_xlsx_report_file(supreme_app_data):
             SALES_ISSUE.append(sum(map(int, SALES_ISSUE[1:])))
             WAIVERS.append(sum(map(int, WAIVERS[1:])))
             Others.append(sum(map(int, Others[1:])))
-
 
             user_wise_trend_data.append(no_call_list)
             user_wise_trend_data.append(repeat)

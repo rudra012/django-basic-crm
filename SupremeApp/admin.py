@@ -198,7 +198,10 @@ class SupremeAdmin(admin.ModelAdmin):
         url_query = url_query if '_changelist_filters' not in request.GET else True
         if not request.user.is_superuser and not url_query:
             # For Agent
-            qs = SupremeModel.objects.filter(final_tc_name=request.user).filter(~Q(status="Paid"))
+            upload_history = UploadFileHistory.objects.filter(upload_type="D", generate_new_report=True).order_by("-uploaded_date")
+            if upload_history:
+                uploaded_date = datetime.datetime.strftime(upload_history[0].uploaded_date, '%Y-%m-%d %H:%M:00')
+            qs = SupremeModel.objects.filter(final_tc_name=request.user).filter(~Q(status="Paid"), date_created__gte = uploaded_date)
         else:
             # For master
             return qs
@@ -213,7 +216,7 @@ class SupremeAdmin(admin.ModelAdmin):
             if model_obj.final_followup_date:
                 time_dif = abs((model_obj.final_followup_date - datetime.datetime.now()).total_seconds() / 60)
                 # print time_dif
-                if time_dif < 5:
+                if -10 < time_dif < 10:
                     make_above_pks.append(model_obj.pk)
         # print make_above_pks, "MAKE ABOVE"
         if make_above_pks:

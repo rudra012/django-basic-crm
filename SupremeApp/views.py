@@ -840,9 +840,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
 
     cluster_data = supreme_app_data.values('cluster').annotate(alloc_cnt=Sum('no_of_active_services'),
                                                                alloc_val=Sum('account_balance'))
-    cluster_paid_data = supreme_app_data.filter(status='Paid').values('cluster').annotate(
+    cluster_paid_data = supreme_app_data.filter(status__in=['Paid', 'Partial Paid']).values('cluster').annotate(
         res_cnt=Sum('no_of_active_services'),
-        res_val=Sum('account_balance'))
+        account_balance=Sum('account_balance'),
+        pending_amt=Sum('pending_amt'))
 
     # print cluster_data
     # print cluster_paid_data
@@ -853,10 +854,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for cdata in cluster_data:
         cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
         if cdata['cluster'] in cluster_paid_data_dict:
-            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_cnt'] is None else
-                                cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
-            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_val'] is None else
-                                cluster_paid_data_dict[cdata['cluster']]['res_val'])
+            res_cnt = 0 if not cluster_paid_data_dict[cdata['cluster']]['res_cnt'] else \
+                cluster_paid_data_dict[cdata['cluster']]['res_cnt']
+            res_val = cluster_paid_data_dict[cdata['cluster']]['account_balance'] - \
+                      cluster_paid_data_dict[cdata['cluster']]['pending_amt']
+            cluster_list.append(res_cnt)
+            cluster_list.append(res_val)
             cluster_list.append(float(cluster_list[3] / cluster_list[1]))
             cluster_list.append(float(cluster_list[4] / cluster_list[2]))
         else:
@@ -916,9 +919,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
 
     tc_data = supreme_app_data.values('final_tc_name').annotate(alloc_cnt=Sum('no_of_active_services'),
                                                                 alloc_val=Sum('account_balance'))
-    tc_paid_data = supreme_app_data.values('final_tc_name').filter(status='Paid').annotate(
+    tc_paid_data = supreme_app_data.values('final_tc_name').filter(status__in=['Paid', 'Partial Paid']).annotate(
         res_cnt=Sum('no_of_active_services'),
-        res_val=Sum('account_balance'))
+        account_balance=Sum('account_balance'),
+        pending_amt=Sum('pending_amt'))
 
     # print tc_data
     # print tc_paid_data
@@ -929,10 +933,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for tdata in tc_data:
         tc_list = [tdata['final_tc_name'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['final_tc_name'] in tc_paid_data_dict:
-            tc_list.append(0 if tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'] is None else
-                           tc_paid_data_dict[tdata['final_tc_name']]['res_cnt'])
-            tc_list.append(0 if tc_paid_data_dict[tdata['final_tc_name']]['res_val'] is None else
-                           tc_paid_data_dict[tdata['final_tc_name']]['res_val'])
+            res_cnt = 0 if not cluster_paid_data_dict[cdata['cluster']]['res_cnt'] else \
+                cluster_paid_data_dict[cdata['cluster']]['res_cnt']
+            res_val = cluster_paid_data_dict[cdata['cluster']]['account_balance'] - \
+                      cluster_paid_data_dict[cdata['cluster']]['pending_amt']
+            tc_list.append(res_cnt)
+            tc_list.append(res_val)
             tc_list.append(float(tc_list[3] / tc_list[1]))
             tc_list.append(float(tc_list[4] / tc_list[2]))
         else:
@@ -991,9 +997,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
 
     product_data = supreme_app_data.values('service_subtype').annotate(alloc_cnt=Sum('no_of_active_services'),
                                                                        alloc_val=Sum('account_balance'))
-    product_paid_data = supreme_app_data.values('service_subtype').filter(status='Paid').annotate(
+    product_paid_data = supreme_app_data.values('service_subtype').filter(status__in=['Paid', 'Partial Paid']).annotate(
         res_cnt=Sum('no_of_active_services'),
-        res_val=Sum('account_balance'))
+        account_balance=Sum('account_balance'),
+        pending_amt=Sum('pending_amt'))
 
     # print product_data
     # print product_paid_data
@@ -1004,10 +1011,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for tdata in product_data:
         product_list = [tdata['service_subtype'], tdata['alloc_cnt'], tdata['alloc_val']]
         if tdata['service_subtype'] in product_paid_data_dict:
-            product_list.append(0 if product_paid_data_dict[tdata['service_subtype']]['res_cnt'] is None else
-                                product_paid_data_dict[tdata['service_subtype']]['res_cnt'])
-            product_list.append(0 if product_paid_data_dict[tdata['service_subtype']]['res_val'] is None else
-                                product_paid_data_dict[tdata['service_subtype']]['res_val'])
+            res_cnt = 0 if not cluster_paid_data_dict[cdata['cluster']]['res_cnt'] else \
+                cluster_paid_data_dict[cdata['cluster']]['res_cnt']
+            res_val = cluster_paid_data_dict[cdata['cluster']]['account_balance'] - \
+                      cluster_paid_data_dict[cdata['cluster']]['pending_amt']
+            product_list.append(res_cnt)
+            product_list.append(res_val)
             product_list.append(float(product_list[3] / product_list[1]))
             product_list.append(float(product_list[4] / product_list[2]))
         else:
@@ -1179,9 +1188,10 @@ def create_temp_xlsx_report_file(supreme_app_data):
 
     cluster_data = supreme_app_data.values('cluster').annotate(alloc_cnt=Sum('no_of_active_services'),
                                                                alloc_val=Sum('account_balance'))
-    cluster_paid_data = supreme_app_data.filter(status='Paid').values('cluster').annotate(
+    cluster_paid_data = supreme_app_data.filter(status__in=['Paid', 'Partial Paid']).values('cluster').annotate(
         res_cnt=Sum('no_of_active_services'),
-        res_val=Sum('account_balance'))
+        account_balance=Sum('account_balance'),
+        pending_amt=Sum('pending_amt'))
 
     # print cluster_data
     # print cluster_paid_data
@@ -1191,10 +1201,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
     for cdata in cluster_data:
         cluster_list = [cdata['cluster'], cdata['alloc_cnt'], cdata['alloc_val']]
         if cdata['cluster'] in cluster_paid_data_dict:
-            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_cnt'] is None else
-                                cluster_paid_data_dict[cdata['cluster']]['res_cnt'])
-            cluster_list.append(0 if cluster_paid_data_dict[cdata['cluster']]['res_val'] is None else
-                                cluster_paid_data_dict[cdata['cluster']]['res_val'])
+            res_cnt = 0 if not cluster_paid_data_dict[cdata['cluster']]['res_cnt'] else \
+                cluster_paid_data_dict[cdata['cluster']]['res_cnt']
+            res_val = cluster_paid_data_dict[cdata['cluster']]['account_balance'] - \
+                      cluster_paid_data_dict[cdata['cluster']]['pending_amt']
+            cluster_list.append(res_cnt)
+            cluster_list.append(res_val)
             cluster_list.append(float(cluster_list[3] / cluster_list[1]))
             cluster_list.append(float(cluster_list[4] / cluster_list[2]))
         else:
@@ -1359,12 +1371,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
             fresh.append(total_fresh)
 
             if total_call != 0 and total_repeat != 0:
-                repeat_percent.append(float(100 * total_repeat / total_call) / 100)
+                repeat_percent.append(float(100 * total_repeat / total_call))
             else:
                 repeat_percent.append(0)
 
             if total_call != 0 and total_fresh != 0:
-                fresh_percent.append(float(100 * total_fresh / total_call) / 100)
+                fresh_percent.append(float(100 * total_fresh / total_call))
             else:
                 fresh_percent.append(0)
 
@@ -1377,12 +1389,12 @@ def create_temp_xlsx_report_file(supreme_app_data):
             no_contact.append(total_no_contact)
 
             if total_call != 0 and total_contact != 0:
-                contact_percent.append(float(100 * total_contact / total_call) / 100)
+                contact_percent.append(float(100 * total_contact / total_call))
             else:
                 contact_percent.append(0)
 
             if total_call != 0 and total_no_contact != 0:
-                no_contact_percent.append(float(100 * total_no_contact / total_call) / 100)
+                no_contact_percent.append(float(100 * total_no_contact / total_call))
             else:
                 no_contact_percent.append(0)
 
@@ -1448,6 +1460,15 @@ def create_temp_xlsx_report_file(supreme_app_data):
             #                 'formula': '=SUM(Table7[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
             #                 'total_function': 'sum',
             #                 })
+            no_call_list.append(sum(map(int, no_call_list[1:])))
+            repeat.append(sum(map(int, repeat[1:])))
+            fresh.append(sum(map(int, fresh[1:])))
+            contact.append(sum(map(int, contact[1:])))
+            no_contact.append(sum(map(int, no_contact[1:])))
+            repeat_percent.append(float(sum(map(float, repeat_percent[1:]))) / len(repeat_percent[1:]))
+            fresh_percent.append(float(sum(map(float, fresh_percent[1:]))) / len(fresh_percent[1:]))
+            contact_percent.append(float(sum(map(float, contact_percent[1:]))) / len(contact_percent[1:]))
+            no_contact_percent.append(float(sum(map(float, no_contact_percent[1:]))) / len(no_contact_percent[1:]))
 
             column_list.append({'header': 'Totals'})
             DISPO_LIST.append('')
@@ -1468,11 +1489,17 @@ def create_temp_xlsx_report_file(supreme_app_data):
             SALES_ISSUE.append(sum(map(int, SALES_ISSUE[1:])))
             WAIVERS.append(sum(map(int, WAIVERS[1:])))
             Others.append(sum(map(int, Others[1:])))
-            no_call_list.append(sum(map(int, no_call_list[1:])))
-            repeat.append(sum(map(int, repeat[1:])))
-            fresh.append(sum(map(int, fresh[1:])))
-            contact.append(sum(map(int, contact[1:])))
-            no_contact.append(sum(map(int, no_contact[1:])))
+
+
+            user_wise_trend_data.append(no_call_list)
+            user_wise_trend_data.append(repeat)
+            user_wise_trend_data.append(fresh)
+            user_wise_trend_data.append(contact)
+            user_wise_trend_data.append(no_contact)
+            user_wise_trend_data.append(repeat_percent)
+            user_wise_trend_data.append(fresh_percent)
+            user_wise_trend_data.append(contact_percent)
+            user_wise_trend_data.append(no_contact_percent)
 
             user_wise_trend_data.append(DISPO_LIST)
             user_wise_trend_data.append(CB)
@@ -1492,11 +1519,6 @@ def create_temp_xlsx_report_file(supreme_app_data):
             user_wise_trend_data.append(SALES_ISSUE)
             user_wise_trend_data.append(WAIVERS)
             user_wise_trend_data.append(Others)
-            user_wise_trend_data.append(no_call_list)
-            user_wise_trend_data.append(repeat)
-            user_wise_trend_data.append(fresh)
-            user_wise_trend_data.append(contact)
-            user_wise_trend_data.append(no_contact)
 
             print column_list
             options = {
@@ -1514,41 +1536,35 @@ def create_temp_xlsx_report_file(supreme_app_data):
             sheet.add_table(nlast_raw + 3, 0, last_raw, len(column_list) - 1, options)
 
             nlast_raw = last_raw
-        if call_days:
-            column_list1.append({'header': 'Avg',
-                                 # 'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
-                                 # 'total_function': 'average',
-                                 'format': percent_format,
-                                 })
 
-            user_wise_trend_data = []
-            print repeat_percent[1:]
-            repeat_percent.append(float(sum(map(float, repeat_percent[1:]))) / len(repeat_percent[1:]))
-            fresh_percent.append(float(sum(map(float, fresh_percent[1:]))) / len(fresh_percent[1:]))
-            contact_percent.append(float(sum(map(float, contact_percent[1:]))) / len(contact_percent[1:]))
-            no_contact_percent.append(float(sum(map(float, no_contact_percent[1:]))) / len(no_contact_percent[1:]))
-            user_wise_trend_data.append(repeat_percent)
-            user_wise_trend_data.append(fresh_percent)
-            user_wise_trend_data.append(contact_percent)
-            user_wise_trend_data.append(no_contact_percent)
+            # if call_days:
+            #     column_list1.append({'header': 'Avg',
+            #                          # 'formula': '=AVERAGE(Table8[@[%s]:[%s]])' % (str(call_days[0].strftime("%d/%B")), str(call_days[-1].strftime("%d/%B"))),
+            #                          # 'total_function': 'average',
+            #                          'format': percent_format,
+            #                          })
+            #
+            #     user_wise_trend_data = []
+            #     print repeat_percent[1:]
+            #
 
-            options = {
-                'data': user_wise_trend_data,
-                'style': 'Table Style Medium 10',
-                'total_row': 0,
-                # 'autofilter': False,
-                'banded_rows': False, 'banded_columns': True,
-                'first_column': True, 'last_column': False,
-                # 'name': 'Cluster wise Performance',
-                'columns': column_list1,
-                'header_row': False
+            # options = {
+            #     'data': user_wise_trend_data,
+            #     'style': 'Table Style Medium 10',
+            #     'total_row': 0,
+            #     # 'autofilter': False,
+            #     'banded_rows': False, 'banded_columns': True,
+            #     'first_column': True, 'last_column': False,
+            #     # 'name': 'Cluster wise Performance',
+            #     'columns': column_list1,
+            #     'header_row': False
+            #
+            # }
 
-            }
-
-            last_raw = nlast_raw + len(user_wise_trend_data) + 2
-            sheet.add_table(nlast_raw + 1, 0, last_raw, len(column_list1) - 1, options)
-
-            nlast_raw = last_raw
+            # last_raw = nlast_raw + len(user_wise_trend_data) + 2
+            # sheet.add_table(nlast_raw + 1, 0, last_raw, len(column_list1) - 1, options)
+            #
+            # nlast_raw = last_raw
 
     book.close()
     return file_path

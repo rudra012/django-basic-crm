@@ -200,7 +200,7 @@ class SupremeAdmin(admin.ModelAdmin):
             # For Agent
             upload_history = UploadFileHistory.objects.filter(upload_type="D", generate_new_report=True).order_by("-uploaded_date")
             if upload_history:
-                uploaded_date = datetime.datetime.strftime(upload_history[0].uploaded_date, '%Y-%m-%d %H:%00:00')
+                uploaded_date = datetime.datetime.strftime(upload_history[0].uploaded_date, '%Y-%m-%d %H:00:00')
                 qs = SupremeModel.objects.filter(final_tc_name=request.user).filter(~Q(status="Paid"), date_created__gte = uploaded_date)
             else:
                 qs = SupremeModel.objects.filter(final_tc_name=request.user).filter(~Q(status="Paid"))

@@ -58,6 +58,9 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
     sheet = wb.sheet_by_index(sheet_no - 1)
     msg = []
     uploaded = []
+    u = UploadFileHistory()
+    u.uploaded_date = datetime.datetime.now()
+
     try:
         for i in range(1, sheet.nrows):
             print(i)
@@ -174,13 +177,11 @@ def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_repo
 
     if uploaded:
         msg.append({"success": "Following entries Uploaded: {}".format(', '.join(uploaded))})
-        u = UploadFileHistory()
         u.file_name = ufile
         u.sheet_no = sheet_no
         u.based_on = based_on
         u.speed = speed
         u.upload_type = "D"
-        u.uploaded_date = datetime.datetime.now()
         u.no_of_records = len(uploaded)
         u.user = user
         if str(generate_report) == "True":
@@ -205,6 +206,8 @@ def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate
     uploaded = []
     error_mobile_no = []
     error_mobile_no_range = []
+    u = UploadFileHistory()
+    u.uploaded_date = datetime.datetime.now()
     try:
         for range_list in chunks(range(1, sheet.nrows), speed):
             print(range_list[0], range_list[-1])
@@ -336,13 +339,11 @@ def fast_upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate
 
     if uploaded:
         msg.append({"success": "Following entries Uploaded: {}".format(', '.join(uploaded))})
-        u = UploadFileHistory()
         u.file_name = ufile
         u.sheet_no = sheet_no
         u.based_on = based_on
         u.speed = speed
         u.upload_type = "D"
-        u.uploaded_date = datetime.datetime.now()
         u.no_of_records = len(uploaded)
         u.user = user
         if str(generate_report) == "True":
@@ -413,6 +414,8 @@ def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     uploaded = []
     not_found_caf = []
     error_caf_no = []
+    u = UploadFileHistory()
+    u.uploaded_date = datetime.datetime.now()
     try:
         for i in range(1, sheet.nrows):
             # print(i)
@@ -453,13 +456,11 @@ def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
 
     if uploaded:
         msg.append({"success": "Following entries Updated: {}".format(', '.join(uploaded))})
-        u = UploadFileHistory()
         u.file_name = ufile
         u.sheet_no = sheet_no
         u.based_on = based_on
         u.speed = speed
         u.upload_type = "P"
-        u.uploaded_date = datetime.datetime.now()
         u.no_of_records = len(uploaded)
         u.user = user
         u.save()
@@ -496,6 +497,8 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     not_found_caf = []
     error_caf_no = []
     error_pending_amt_caf = []
+    u = UploadFileHistory()
+    u.uploaded_date = datetime.datetime.now()
     error_caf_no_range = []
     try:
         for range_list in chunks(range(1, sheet.nrows), speed):
@@ -591,13 +594,11 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
 
     if uploaded:
         msg.append({"success": "Following entries Updated: {}".format(', '.join(uploaded))})
-        u = UploadFileHistory()
         u.file_name = ufile
         u.sheet_no = sheet_no
         u.based_on = based_on
         u.speed = speed
         u.upload_type = "P"
-        u.uploaded_date = datetime.datetime.now()
         u.no_of_records = len(uploaded)
         u.user = user
         u.save()

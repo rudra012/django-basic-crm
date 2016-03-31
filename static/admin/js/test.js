@@ -64,4 +64,32 @@ $(function(){
     $("#id_tcmodel_set-0-calling_code").change(function() {
         hideshowCBDate();
     });
+
+    $( "#suprememodel_form" ).submit(function() {
+        flag = true;
+        if(isExist(lst, $("#id_tcmodel_set-0-calling_code").val())) {
+            var ddate = $("#id_tcmodel_set-0-followup_date input").val();
+            if(ddate == "")
+            {
+                $(".field-followup_date").addClass('has-error');
+                flag = false;
+            }
+            else
+            {
+                $(".field-followup_date").removeClass('has-error');
+            }
+        }
+
+        var calling_remarks = $("#id_tcmodel_set-0-calling_remarks").val();
+        if(calling_remarks == "")
+        {
+            $(".field-calling_remarks").addClass('has-error');
+            flag = false;
+        }
+        else
+        {
+            $(".field-calling_remarks").removeClass('has-error');
+        }
+        return flag;
+    });
 });

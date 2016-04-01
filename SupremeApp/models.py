@@ -111,7 +111,8 @@ class SupremeModel(models.Model):
     pending_amt = models.DecimalField(max_digits=65, default=0, decimal_places=2, verbose_name='Pending Amount')
     pending_amt.lookup_range = (
         (None, 'All'),
-        ([0, 100], '0-100'),
+        ([None, 1], 'less than 1'),
+        ([1, 100], '1-100'),
         ([100, 300], '100-300'),
         ([300, 1000], '300-1000'),
         ([1000, 10000], '1000-10000'),
@@ -262,7 +263,8 @@ class UserDetail(models.Model):
 
 
 class UploadFileHistory(models.Model):
-    upload_type = models.CharField(max_length=250, null=False, blank=False, choices=[("D",) * 2, ("P",) * 2])
+    upload_type = models.CharField(max_length=250, null=False, blank=False, choices=[("D",) * 2, ("P",) * 2, ("D",) * 2,
+                                                                                     ("R",) * 2])
     file_name = models.CharField(max_length=250, null=False, blank=False, default='')
     sheet_no = models.CharField(max_length=250, null=False, blank=False, default='0')
     based_on = models.CharField(max_length=250, null=False, blank=False, default='0')

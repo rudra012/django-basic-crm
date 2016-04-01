@@ -48,6 +48,7 @@ def chunks(iterable, n):
         yield iterable[i:i + n]
 
 
+# Data Upload
 def upload_data_excel_file(ufile, sheet_no, based_on, speed, user, generate_report):
     print('reading file', ufile)
     wb = xlrd.open_workbook(file_contents=ufile.read())
@@ -402,6 +403,7 @@ def upload(request):
     return render(request, 'SupremeApp/upload.html', locals())
 
 
+# Paid File Upload
 def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
     print('reading paid file', ufile)
     wb = xlrd.open_workbook(file_contents=ufile.read())
@@ -410,6 +412,10 @@ def upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
         return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
 
     sheet = wb.sheet_by_index(sheet_no - 1)
+
+    if sheet.ncols != 2:
+        return [{"error": "Invalid no. of columns in uploaded file. Only 2 columns are allowed."}]
+
     msg = []
     uploaded = []
     not_found_caf = []
@@ -492,6 +498,10 @@ def fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
         return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
 
     sheet = wb.sheet_by_index(sheet_no - 1)
+
+    if sheet.ncols != 2:
+        return [{"error": "Invalid no. of columns in uploaded file. Only 2 columns are allowed."}]
+
     msg = []
     uploaded = []
     not_found_caf = []
@@ -673,6 +683,288 @@ def paid_upload(request):
 
     results = UploadFileHistory.objects.filter(upload_type='P').order_by('-uploaded_date').values()
     return render(request, 'SupremeApp/paid_upload.html', locals())
+
+
+# Reverse Paid File Upload
+def reverse_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
+    print('reading paid file', ufile)
+    wb = xlrd.open_workbook(file_contents=ufile.read())
+    # print wb.nsheets
+    if sheet_no not in range(1, wb.nsheets + 1):
+        return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
+
+    sheet = wb.sheet_by_index(sheet_no - 1)
+
+    if sheet.ncols != 2:
+        return [{"error": "Invalid no. of columns in uploaded file. Only 2 columns are allowed."}]
+
+    msg = []
+    uploaded = []
+    not_found_caf = []
+    error_caf_no = []
+    u = UploadFileHistory()
+    u.uploaded_date = datetime.datetime.now()
+    try:
+        for i in range(1, sheet.nrows):
+            # print(i)
+
+            # for col in range(sheet.ncols):
+            #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col).value), sheet.name)
+            caf_num = ''
+            try:
+                caf_num = try_to_str_int(sheet.cell(i, 0).value)
+                payment_amt = float(sheet.cell(i, 1).value)
+                # print caf_num, payment_amt, type(payment_amt)
+                # get all objects related to given CAF number
+                paid_user_obj_list = list(SupremeModel.objects.filter(caf_num=caf_num))
+                # print paid_user_obj_list
+                # Sort to get latest object first
+                paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
+                if paid_user_obj_list:
+                    latest_user_obj = paid_user_obj_list[0]
+                    remain_payment = float(latest_user_obj.pending_amt) + payment_amt
+                    # print latest_user_obj.account_balance, payment_amt, remain_payment
+                    if remain_payment < 100:
+                        latest_user_obj.status = "Paid"
+                    else:
+                        latest_user_obj.status = "Partial Paid"
+                    # print "old pending", float(latest_user_obj.pending_amt)
+                    latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) + payment_amt
+                    # print "new pending", float(latest_user_obj.pending_amt)
+                    latest_user_obj.save()
+                    uploaded.append(caf_num)
+                else:
+                    not_found_caf.append(caf_num)
+            except Exception, e:
+                print traceback.format_exc()
+                error_caf_no.append(caf_num)
+    except Exception, e:
+        print traceback.format_exc()
+        return [{"error": "System Error: " + str(e)}]
+
+    if uploaded:
+        msg.append({"success": "Following entries Updated: {}".format(', '.join(uploaded))})
+        u.file_name = ufile
+        u.sheet_no = sheet_no
+        u.based_on = based_on
+        u.speed = speed
+        u.upload_type = "R"
+        u.no_of_records = len(uploaded)
+        u.user = user
+        u.save()
+    else:
+        msg.append({"warning": "No Entries Updated"})
+
+    if not_found_caf:
+        msg.append({"error": "Following entries Not found in Records: {}".format(', '.join(not_found_caf))})
+        pass
+    else:
+        # msg.append("All Given Entries Updated")
+        pass
+
+    if error_caf_no:
+        msg.append({"error": "Error in Following CAF Numbers: {}".format(', '.join(error_caf_no))})
+        pass
+    else:
+        pass
+        # msg.append("No Error in any Entries")
+
+    return msg
+
+
+def reverse_fast_upload_paid_excel_file(ufile, sheet_no, based_on, speed, user):
+    print('fast reading paid file', ufile, speed)
+    wb = xlrd.open_workbook(file_contents=ufile.read())
+    # print wb.nsheets
+    if sheet_no not in range(1, wb.nsheets + 1):
+        return [{"error": "Sheet number {} not in range. There are {} sheets".format(sheet_no, wb.nsheets)}]
+
+    sheet = wb.sheet_by_index(sheet_no - 1)
+
+    if sheet.ncols != 2:
+        return [{"error": "Invalid no. of columns in uploaded file. Only 2 columns are allowed."}]
+
+    msg = []
+    uploaded = []
+    not_found_caf = []
+    error_caf_no = []
+    error_pending_amt_caf = []
+    u = UploadFileHistory()
+    u.uploaded_date = datetime.datetime.now()
+    error_caf_no_range = []
+    try:
+        for range_list in chunks(range(1, sheet.nrows), speed):
+            print(range_list[0], range_list[-1])
+            # for col in range(sheet.ncols):
+            #     print(col, sheet.cell(i, col).value, type(sheet.cell(i, col)), sheet.name)
+            model_list = []
+            # caf_num_list = []
+            # payment_amt_list = []
+            caf_payment_dict = {}
+            try:
+                for i in range_list:
+                    caf_payment_dict[try_to_str_int(sheet.cell(i, 0).value)] = float(sheet.cell(i, 1).value)
+                    # caf_num_list.append(try_to_str_int(sheet.cell(i, 0).value))
+                    # payment_amt_list.append(float(sheet.cell(i, 1).value))
+                # print caf_num_list, payment_amt_list
+                # print "CAF", caf_payment_dict
+                # try:
+                # get all objects related to given CAF number
+                paid_user_obj_list = list(SupremeModel.objects.filter(caf_num__in=caf_payment_dict.keys()))
+                print paid_user_obj_list
+                paid_user_obj_dict = {}
+                if paid_user_obj_list:
+                    for paid_user in paid_user_obj_list:
+                        if paid_user.caf_num in paid_user_obj_dict.keys():
+                            paid_user_obj_dict[paid_user.caf_num].append(paid_user)
+                        else:
+                            paid_user_obj_dict[paid_user.caf_num] = [paid_user]
+                print paid_user_obj_dict
+                # Sort to get latest object first
+                # paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
+                # print paid_user_obj_list
+
+                if paid_user_obj_dict:
+                    for caf_num, paid_user_obj_list in paid_user_obj_dict.items():
+                        # latest_user_obj = paid_user_obj_list[0]
+                        try:
+                            print(paid_user_obj_list)
+                            paid_user_obj_list.sort(key=lambda x: x.date_created, reverse=True)
+                            latest_user_obj = paid_user_obj_list[0]
+                            payment_amt = caf_payment_dict[latest_user_obj.caf_num]
+                            print latest_user_obj, payment_amt, latest_user_obj.pending_amt
+                            # if float(latest_user_obj.pending_amt) > payment_amt:
+
+                            latest_user_obj.pending_amt = Decimal(
+                                format(float(latest_user_obj.pending_amt) + payment_amt, '.2f'))
+                            if latest_user_obj.pending_amt < 100:
+                                latest_user_obj.status = "Paid"
+                            else:
+                                latest_user_obj.status = "Partial Paid"
+                            print latest_user_obj.pending_amt, payment_amt, latest_user_obj.status
+                            # print "old pending", float(latest_user_obj.pending_amt)
+                            # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
+                            # print "new pending", float(latest_user_obj.pending_amt)
+                            # latest_user_obj.save()
+                            model_list.append(latest_user_obj)
+                            uploaded.append(latest_user_obj.caf_num)
+
+                            # else:
+                            #     latest_user_obj.pending_amt = Decimal(format(float(0.00), '.2f'))
+                            #     latest_user_obj.status = "Paid"
+
+                            # if latest_user_obj.pending_amt < 100:
+                            #     latest_user_obj.status = "Paid"
+                            # else:
+                            #     latest_user_obj.status = "Partial Paid"
+
+                            # print "old pending", float(latest_user_obj.pending_amt)
+                            # latest_user_obj.pending_amt = float(latest_user_obj.pending_amt) - payment_amt
+                            # print "new pending", float(latest_user_obj.pending_amt)
+                            # latest_user_obj.save()
+                            # model_list.append(latest_user_obj)
+                            # uploaded.append(latest_user_obj.caf_num)
+                            # error_pending_amt_caf.append(latest_user_obj.caf_num)
+                        except:
+                            error_caf_no.append(caf_num)
+                else:
+                    pass
+                    # not_found_caf.append(latest_user_obj.caf_num)
+            except Exception as e:
+                print traceback.format_exc()
+                error_caf_no += caf_payment_dict.keys()
+            # except Exception as e:
+            #     print traceback.format_exc()
+            #     error_caf_no_range.append(
+            #         str(sheet.cell(range_list[0], 0).value) + " : " + str(sheet.cell(range_list[-1], 0).value))
+            # print model_list
+            if model_list:
+                SupremeModel.objects.bulk_update(model_list, update_fields=['status', 'pending_amt'])
+    except Exception as e:
+        print traceback.format_exc()
+        return [{"error": "System Error: " + str(e)}]
+
+    if uploaded:
+        msg.append({"success": "Following entries Updated: {}".format(', '.join(uploaded))})
+        u.file_name = ufile
+        u.sheet_no = sheet_no
+        u.based_on = based_on
+        u.speed = speed
+        u.upload_type = "R"
+        u.no_of_records = len(uploaded)
+        u.user = user
+        u.save()
+    else:
+        msg.append({"warning": "No Entries Updated"})
+
+    if not_found_caf:
+        msg.append({"warning": "Following entries Not found in Records: {}".format(', '.join(not_found_caf))})
+        pass
+    else:
+        # msg.append("All Given Entries Updated")
+        pass
+
+    if error_pending_amt_caf:
+        msg.append({"error": "Following entries Payment amount is grater than Pending amount: {}".format(
+            ', '.join(error_pending_amt_caf))})
+        pass
+    else:
+        pass
+
+    if error_caf_no:
+        msg.append({"error": "Error in Following CAF Numbers: {}".format(', '.join(error_caf_no))})
+        pass
+    else:
+        # msg.append("No Error in any Entries")
+        pass
+
+        # if error_caf_no_range:
+        #     msg.append({"error": "Something Wrong in CAF range : {}".format(', '.join(error_caf_no_range))})
+        #     pass
+        # else:
+        # msg.append("No Error in any range of Entries")
+        # pass
+
+    return msg
+
+
+@login_required
+def reverse_paid_upload(request):
+    session_id = request.META['HTTP_COOKIE'].split()[1].split('=')[1]
+    print session_id, "REVERSE UPLOAD REQ"
+    message_list = []
+    print 'rm', request.method
+    if request.method == 'POST':
+        form = PaidUploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            ufile = request.FILES['file']
+            sheel_no = int(form.data['sheet_no'])
+            based_on = form.data['based_on']
+            speed = int(form.data['speed'])
+            if ufile.name.endswith('.xls') or ufile.name.endswith('.xlsx'):
+                if based_on == "Normal Upload":
+                    msg = reverse_upload_paid_excel_file(ufile, sheel_no, based_on, speed, request.user)
+                else:
+                    msg = reverse_fast_upload_paid_excel_file(ufile, sheel_no, based_on, speed, request.user)
+            else:
+                msg = [{"error": " .xls, .xlsx and .csv file formats are only supported."}]
+            message_list = msg
+        else:
+            message_list.append({"error": "Supply appropriate data."})
+    form = PaidUploadFileForm()
+    print message_list
+    for msg in message_list:
+        for k, v in msg.iteritems():
+            if k == "warning":
+                messages.warning(request, v)
+            elif k == "error":
+                print v
+                messages.error(request, v)
+            elif k == "success":
+                messages.success(request, v)
+
+    results = UploadFileHistory.objects.filter(upload_type='R').order_by('-uploaded_date').values()
+    return render(request, 'SupremeApp/reverse_paid_upload.html', locals())
 
 
 def get_supreme_app_data(from_date, to_date, based_on):

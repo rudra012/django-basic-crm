@@ -113,7 +113,7 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
 )
 STATIC_URL = '/static/'
-STATIC_ROOT = ''
+STATIC_ROOT = '/static_root/'
 # TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
 FORM_SESSION = {}  # {session_id : form object}
